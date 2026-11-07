@@ -39,7 +39,8 @@ npm test
 Five JSDOM suites boot `index.html` and cover patterns, wallet/restore codes,
 the solo and daily loop, gift tokens and the room flow with a fake PeerJS
 broker. See `tests/README.md`. GitHub Actions runs the same suites on every
-push and refreshes `downloads/bingo-2.zip` when the page or docs change.
+push and refreshes `downloads/bingo-2.zip` when the page or docs change; pull
+requests fail if the committed ZIP is stale.
 
 ## Files
 

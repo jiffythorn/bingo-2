@@ -75,7 +75,8 @@ friends and bots. No build step, no server, no accounts.
   terms, README, this doc, licence) with deterministic timestamps.
 - GitHub Pages serves `main` at the URL above; HTTPS enforced.
 - `.github/workflows/ci.yml` runs `npm test`, rebuilds the ZIP with
-  `scripts/build-zip.py`, and commits it back only when the bytes changed.
+  `scripts/build-zip.py`, and commits it back only when the bytes changed. On
+  pull requests it fails when the committed ZIP is stale instead.
 - `terms.html` documents the points-only model.
 
 ## How it works

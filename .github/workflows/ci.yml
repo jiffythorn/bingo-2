@@ -29,6 +29,17 @@ jobs:
       - name: Rebuild download ZIP
         run: python3 scripts/build-zip.py
 
+      - name: Fail if the committed ZIP is stale
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --quiet -- downloads/bingo-2.zip; then
+            echo "ZIP matches the sources."
+          else
+            echo "::error file=downloads/bingo-2.zip::downloads/bingo-2.zip is stale. Run 'python3 scripts/build-zip.py' and commit the result."
+            git diff --stat -- downloads/bingo-2.zip
+            exit 1
+          fi
+
       - name: Commit the ZIP if it changed
         if: github.event_name != 'pull_request'
         run: |
