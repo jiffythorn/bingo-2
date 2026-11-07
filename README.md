@@ -37,6 +37,8 @@ Solo: pick a pattern (or press 🎯 Today) and start calling. Daub each called n
 | `terms.html` | Points-only notice and terms |
 | `BINGO-2-ECONOMY.md` | Design notes on the points economy and why nothing has cash value |
 
+A ready-to-share copy of the playable files ships as `downloads/bingo-2.zip` (unzip it and open `index.html`).
+
 ## Notes
 
 - All state lives in `localStorage` in the player's browser; there is no server, account or sync. Restore codes are the only way to move a record.
