@@ -1,0 +1,16 @@
+{
+  "name": "bingo-2",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Points-only 75-ball bingo with daily patterns, rooms and portable restore codes",
+  "scripts": {
+    "test": "node tests/run.js"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

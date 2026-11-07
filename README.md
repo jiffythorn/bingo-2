@@ -29,6 +29,17 @@ python3 -m http.server 8080
 
 Solo: pick a pattern (or press 🎯 Today) and start calling. Daub each called number; complete the pattern to win. Rooms: 🌐 Rooms → create or join; the host controls rounds.
 
+## Tests
+
+```bash
+npm install
+npm test
+```
+
+Five JSDOM suites boot `index.html` and cover patterns, wallet/restore codes,
+the solo and daily loop, gift tokens and the room flow with a fake PeerJS
+broker. See `tests/README.md`.
+
 ## Files
 
 | File | Purpose |
@@ -38,6 +49,7 @@ Solo: pick a pattern (or press 🎯 Today) and start calling. Daub each called n
 | `style.css` | Shared base styles (nav, buttons, page shell) |
 | `terms.html` | Points-only notice and terms |
 | `BINGO-2-ECONOMY.md` | Design notes on the points economy and why nothing has cash value |
+| `tests/` | JSDOM suites, run with `npm test` |
 
 A ready-to-share copy of the playable files ships as `downloads/bingo-2.zip` (unzip it and open `index.html`).
 

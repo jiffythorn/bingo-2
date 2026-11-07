@@ -22,7 +22,7 @@ friends and bots. No build step, no server, no accounts.
 | Restore codes (v5, backwards compatible) | Done |
 | Live rooms, bots, chat | Done, but host-authoritative and PeerJS-dependent |
 | Server-side leaderboard / anti-abuse | **Not started** |
-| Automated tests in the repo | **Not yet — harnesses live outside** |
+| Automated tests in the repo | Done — `npm test` (JSDOM) |
 | CI (tests, ZIP rebuild) | **Not started** |
 
 ## What's done
@@ -144,21 +144,22 @@ recorded in `gh.bingo2.claims` so a code cannot be reused on the same browser.
 ## Verified
 
 - `node --check` on the extracted script: clean.
-- Logic suites (JSDOM): wallet/restore **50** checks, solo + daily + freeze +
-  history + reminder **75**, rooms **27**, patterns **69**, gift **23**, mint
-  **20**, all passing at the time of writing.
+- Logic suites (JSDOM) run with `npm test`: patterns **69** checks, wallet and
+  restore codes **50**, solo + daily + freeze + history + reminder **75**, gift
+  tokens **23**, rooms **27** — five suites, all passing and stable across
+  repeated runs.
 - Published page checked at the Pages URL: HTML, both stylesheets, terms and the
   ZIP return 200; the board, pattern list and history strip render; browser
   console is empty.
 
-**Caveat:** those suites were authored as throwaway harnesses outside this repo.
-They are not committed here and there is no `package.json` or CI, so nothing
-runs automatically on push.
+The suites live in `tests/`, use `jsdom` as the only dev dependency, and boot
+the real `index.html` (the gift suite patches in a throwaway public key; the room
+suite fakes PeerJS). Nothing runs on push yet — see the CI item below.
 
 ## Not done / known gaps
 
-1. **Tests and CI are missing from the repo.** Nothing guards regressions, and
-   the room suite has one timing-sensitive assertion that occasionally flakes.
+1. **No CI.** `npm test` exists and is stable, but nothing runs it on push or
+   pull request, so regressions still depend on someone running it locally.
 2. **No server-side state.** Points, records and streaks are client-side and
    editable by the player. Restore codes are not secrets and can be copied or
    replayed, so standings are not trustworthy for prizes.
@@ -183,10 +184,8 @@ runs automatically on push.
 
 | Task | Why |
 | --- | --- |
-| Port the JSDOM suites into `tests/` with a `package.json` | Makes the current quality reproducible |
 | GitHub Action: run tests on PR/push | Prevents silent regressions |
 | GitHub Action: rebuild `downloads/bingo-2.zip` when page/CSS/docs change | Stops the download drifting from the page |
-| Fix or de-flake the guest-daub assertion | Room changes become safe to make |
 | Vendor PeerJS or add a clear load-failure message | Removes a silent CDN failure mode |
 
 ### Next
@@ -223,6 +222,10 @@ runs automatically on push.
 ## How to work on it
 
 ```bash
+# tests
+npm install
+npm test
+
 # play locally
 python3 -m http.server 8080   # then open http://localhost:8080/
 
