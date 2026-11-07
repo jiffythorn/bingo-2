@@ -4,6 +4,8 @@ A points-only 75-ball bingo table, built as plain HTML/CSS/JS with no build step
 
 There is **no money here**. Points are score tokens: they cannot be bought, sold, transferred or cashed out. They are used for card costs and pots, and they feed the record that acts as the leaderboard.
 
+Project status, architecture notes and remaining work: [PROJECT.md](PROJECT.md).
+
 ## Features
 
 - **Eight win patterns** — any line, four corners, X, T, H, the climbing ladder, bullseye (3×3 target, no free centre) and blackout — each with its own card-cost budget and bonus window.
