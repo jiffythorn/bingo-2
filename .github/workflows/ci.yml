@@ -41,7 +41,7 @@ jobs:
           fi
 
       - name: Commit the ZIP if it changed
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           if git diff --quiet -- downloads/bingo-2.zip; then
             echo "ZIP already matches the sources."
