@@ -146,7 +146,7 @@ recorded in `gh.bingo2.claims` so a code cannot be reused on the same browser.
 - `node --check` on the extracted script: clean.
 - Logic suites (JSDOM) run with `npm test`: patterns **69** checks, wallet and
   restore codes **50**, solo + daily + freeze + history + reminder **75**, gift
-  tokens **23**, rooms **27** — five suites, all passing and stable across
+  tokens **22**, rooms **27** — five suites, all passing and stable across
   repeated runs.
 - Published page checked at the Pages URL: HTML, both stylesheets, terms and the
   ZIP return 200; the board, pattern list and history strip render; browser
