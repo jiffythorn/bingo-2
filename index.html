@@ -1,0 +1,3024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bingo 2 — points-only bingo</title>
+<meta name="description" content="Bingo 2: a points-only 75-ball bingo table with eight win patterns, a pattern of the day, daily streaks and a bankable streak freeze, solo and room standings, live rooms with smart bots, and portable restore codes.">
+<meta name="theme-color" content="#0a0d14">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎱</text></svg>">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="bingo-2.css">
+</head>
+<body class="page-bingo2">
+
+<header class="nav">
+  <a class="brand" href="index.html"><span class="logo">🎱</span> Bingo 2</a>
+  <div class="spacer"></div>
+  <a class="link hide-sm" href="terms.html">Points &amp; terms</a>
+  <a class="btn btn-primary btn-sm" href="index.html">↻ New table</a>
+</header>
+
+<main class="game-page page-bingo2">
+  <div class="game-head">
+    <div class="big">🎱</div>
+    <div class="grow">
+      <h1>Bingo 2</h1>
+      <p>A second table with house rules. The host picks the winning pattern — any line, four corners, X, T, H, a climbing ladder, a bullseye or a blackout — calls the balls and adds smart bots. Everyone else joins with a 5-character code and chats while they daub.</p>
+    </div>
+    <div class="acts">
+      <label class="solo-pattern" id="soloPatternWrap">Pattern
+        <select id="soloPatternSel" aria-label="Solo winning pattern"></select>
+      </label>
+      <button class="btn btn-ghost btn-sm daily-chip" id="dailyBtn" type="button" title="Play today's pattern">🎯 Today · <b id="dailyName">—</b></button>
+      <button class="btn btn-ghost btn-sm" id="newBtn">↻ New card</button>
+      <button class="btn btn-primary btn-sm" id="roomsBtn">🌐 Rooms</button>
+    </div>
+  </div>
+
+  <div class="hud">
+    <div class="chip on">Balls <b id="balls">0</b></div>
+    <div class="chip">Last <b id="last">—</b></div>
+    <div class="chip" id="creditsChip">Points <b id="credits">1000</b></div>
+    <div class="chip" id="potChip" hidden>Pot <b id="pot">0</b></div>
+    <div class="chip" id="bestChip">Best <b id="best">—</b></div>
+    <div class="chip" id="streakChip" hidden>🔥 Streak <b id="streak">0</b><span id="freezeTag" hidden title="Streak freeze ready — covers one missed day">❄</span></div>
+    <div class="chip" id="winsChip" hidden>Wins <b id="wins">0</b></div>
+  </div>
+
+  <div class="daily-strip" id="dailyStrip" hidden>
+    <span class="daily-strip-label">🎯 Last 7 days</span>
+    <div class="daily-strip-days" id="dailyHistory" aria-label="Recent daily play"></div>
+  </div>
+
+  <div class="freeze-reminder" id="freezeReminder" hidden>
+    <span id="freezeReminderText">❄ Freeze ready — play today's pattern to keep your streak.</span>
+    <span class="freeze-reminder-actions">
+      <button class="btn btn-ghost btn-sm" id="freezePlayBtn" type="button">Play today</button>
+      <button class="btn btn-ghost btn-sm" id="freezeSnoozeBtn" type="button" title="Hide this until tomorrow">Not today</button>
+    </span>
+  </div>
+
+  <div class="stage">
+    <div class="bingo-shell">
+      <div class="roombar" id="roomBar" hidden>
+        <button class="room-code" id="roomCodeBtn" type="button" title="Copy the invite link">Room <b id="roomCode">—</b></button>
+        <span class="room-role" id="roomRole">Host</span>
+        <div class="room-players" id="roomPlayers" aria-label="Players in the room"></div>
+        <span class="room-jackpot" id="roomJackpot" hidden>🎰 <b id="jackpotAmt">0</b></span>
+        <button class="btn btn-ghost btn-sm room-chat-btn" id="chatBtn" type="button">💬 Chat <span class="chat-unread" id="chatUnread" hidden>0</span></button>
+        <button class="btn btn-ghost btn-sm" id="leaveBtn" type="button">Leave</button>
+      </div>
+
+      <div class="bingo-call" aria-live="polite">
+        <span class="bingo-ball"><i id="callLetter">★</i><b id="callNum">?</b></span>
+        <div class="bingo-call-text">
+          <strong id="callTitle">Ready to play</strong>
+          <span id="callNote">Press start and daub the numbers as they are called.</span>
+        </div>
+      </div>
+
+      <div class="bingo-cards" id="cardTabs" hidden></div>
+
+      <div class="bingo-board">
+        <div class="bingo-cols" aria-hidden="true"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>
+        <div class="bingo-grid" id="grid"></div>
+      </div>
+
+      <div class="bingo-status" id="status" aria-live="polite">Tap each called number on your card.</div>
+
+      <div class="bingo-history-wrap">
+        <span>Called</span>
+        <div class="bingo-history" id="history" aria-label="Called numbers"></div>
+      </div>
+    </div>
+
+    <div class="overlay show" id="overlay">
+      <div class="ov-ico" id="ovIco">🎱</div>
+      <h2 id="ovTitle">Bingo night</h2>
+      <p id="ovText">A new ball drops every 1.2 seconds. Tap the numbers on your card to daub them — the first full row, column or diagonal wins.</p>
+      <button class="btn btn-primary" id="startBtn">▶ Start calling</button>
+      <button class="btn btn-ghost" id="overlayAlt" type="button" hidden></button>
+    </div>
+  </div>
+
+  <div class="controls-hint">
+    <span>Tap called numbers to daub them</span>
+    <span><kbd>N</kbd> new card</span>
+    <span>Solo: pick any pattern · Rooms: host sets it</span>
+    <span>Points are score tokens — no cash value</span>
+  </div>
+</main>
+
+<div class="chat-drawer" id="chatDrawer" hidden>
+  <div class="chat-head">
+    <strong>💬 Room chat</strong>
+    <button class="chat-x" id="chatClose" type="button" aria-label="Close chat">✕</button>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <form class="chat-form" id="chatForm">
+    <input id="chatInput" maxlength="140" autocomplete="off" placeholder="Say something…" aria-label="Chat message">
+    <button class="btn btn-primary btn-sm" type="submit">Send</button>
+  </form>
+</div>
+
+<div class="room-modal" id="roomModal" hidden>
+  <div class="room-dialog" role="dialog" aria-modal="true" aria-labelledby="roomTitle">
+    <div class="room-head">
+      <div>
+        <span class="room-eyebrow">Bingo 2 rooms</span>
+        <h2 id="roomTitle">Play with friends</h2>
+      </div>
+      <button class="room-x" id="roomClose" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div id="roomSetup">
+      <div class="room-tabs" role="tablist" aria-label="Room options">
+        <button class="room-tab on" id="createTab" data-tab="create" type="button" role="tab" aria-selected="true">Create a room</button>
+        <button class="room-tab" id="joinTab" data-tab="join" type="button" role="tab" aria-selected="false">Join a room</button>
+      </div>
+
+      <form class="room-pane" id="createForm">
+        <label class="room-field">Your name
+          <input id="hostName" maxlength="14" autocomplete="nickname" placeholder="Host">
+        </label>
+        <div class="room-field-row">
+          <label class="room-field">Winning pattern
+            <select id="patternSel">
+              <option value="daily" id="patternDailyOpt">Today's pattern</option>
+              <option value="line" selected>Any line · row, column or diagonal</option>
+              <option value="corners">Four corners</option>
+              <option value="x">X · both diagonals</option>
+              <option value="t">T · top row + middle column</option>
+              <option value="h">H · side columns + middle row</option>
+              <option value="ladder">Climb the ladder · staircase</option>
+              <option value="bullseye">Bullseye · 3×3 target, no free centre</option>
+              <option value="blackout">Blackout · every square</option>
+            </select>
+          </label>
+          <label class="room-field">Ball pace
+            <select id="paceSel">
+              <option value="chill">Chill · 1.7s</option>
+              <option value="classic" selected>Classic · 1.2s</option>
+              <option value="fast">Fast · 0.8s</option>
+            </select>
+          </label>
+          <label class="room-field">Table
+            <select id="tableSel">
+              <option value="0">Practice · free</option>
+              <option value="10" selected>Bronze · 10 points/card</option>
+              <option value="50">Silver · 50 points/card</option>
+              <option value="250">Gold · 250 points/card</option>
+              <option value="1000">Champion · 1,000 points/card</option>
+            </select>
+          </label>
+          <label class="room-field">Cards each
+            <select id="cardsSel">
+              <option value="1" selected>1 card</option>
+              <option value="2">2 cards</option>
+              <option value="3">3 cards</option>
+            </select>
+          </label>
+          <label class="room-field">Smart bots
+            <select id="botSel">
+              <option value="0">None</option>
+              <option value="1">1 bot</option>
+              <option value="2">2 bots</option>
+              <option value="3">3 bots</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn btn-primary room-main-btn" id="createBtn" type="submit">Create room</button>
+        <p class="room-note">You are the host: this tab calls the balls, validates daubs, runs the bots and relays chat. Keep it open while people play. Chat disappears when the room closes.</p>
+      </form>
+
+      <form class="room-pane" id="joinForm" hidden>
+        <label class="room-field">Your name
+          <input id="joinName" maxlength="14" autocomplete="nickname" placeholder="Guest">
+        </label>
+        <label class="room-field">Room code
+          <input id="joinCode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" aria-describedby="joinHint">
+        </label>
+        <button class="btn btn-primary room-main-btn" id="joinBtn" type="submit">Join room</button>
+        <p class="room-note" id="joinHint">Ask the host for the 5-character code, or open their invite link.</p>
+        <p class="room-note">You join with a nickname. Chat is ephemeral and not moderated — share the code only with people you trust.</p>
+      </form>
+
+      <p class="room-error" id="roomError" hidden></p>
+    </div>
+
+    <div id="roomLobby" hidden>
+      <div class="lobby-code">
+        <div>
+          <span>Room code</span>
+          <strong id="lobbyCode">—</strong>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">🔗 Copy invite link</button>
+      </div>
+
+      <div class="lobby-grid">
+        <div class="lobby-players-col">
+          <div class="lobby-subhead">
+            <h3>Players</h3>
+            <span id="lobbyCount">1</span>
+          </div>
+          <ul class="lobby-players" id="lobbyPlayers"></ul>
+
+          <div class="lobby-settings" id="hostSettings">
+            <label class="room-field">Win
+              <select id="lobbyPattern">
+                <option value="line">Any line</option>
+                <option value="corners">Four corners</option>
+                <option value="blackout">Blackout</option>
+              </select>
+            </label>
+            <label class="room-field">Pace
+              <select id="lobbyPace">
+                <option value="chill">Chill</option>
+                <option value="classic">Classic</option>
+                <option value="fast">Fast</option>
+              </select>
+            </label>
+            <label class="room-field">Bots
+              <select id="lobbyBots">
+                <option value="0">None</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </label>
+            <label class="room-field">Table
+              <select id="lobbyTable">
+                <option value="0">Practice</option>
+                <option value="10">Bronze · 10 pts</option>
+                <option value="50">Silver · 50 pts</option>
+                <option value="250">Gold · 250 pts</option>
+                <option value="1000">Champion</option>
+              </select>
+            </label>
+            <label class="room-field">Cards
+              <select id="lobbyCards">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </label>
+          </div>
+          <p class="lobby-summary" id="guestSettings" hidden></p>
+          <p class="lobby-pot" id="lobbyPot"></p>
+
+          <button class="btn btn-primary room-main-btn" id="startRoomBtn" type="button">▶ Start game</button>
+          <p class="room-note" id="lobbyWait" hidden>Waiting for the host to start…</p>
+        </div>
+
+        <div class="lobby-chat-col">
+          <div class="lobby-subhead"><h3>Chat</h3></div>
+          <div class="chat-log lobby-log" id="lobbyChat" aria-live="polite"></div>
+          <form class="chat-form" id="lobbyChatForm">
+            <input id="lobbyChatInput" maxlength="140" autocomplete="off" placeholder="Say hello…" aria-label="Lobby chat message">
+            <button class="btn btn-primary btn-sm" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lobby-foot">
+        <button class="btn btn-ghost btn-sm" id="lobbyLeave" type="button">Leave room</button>
+        <span>Chat and cards disappear when the room closes.</span>
+      </div>
+    </div>
+
+    <div class="wallet" id="walletBox">
+      <div class="wallet-head">
+        <span>👛 Your points</span>
+        <strong><span id="walletCredits">1,000</span> points</strong>
+      </div>
+      <div class="wallet-actions">
+        <button class="btn btn-ghost btn-sm" id="walletCopy" type="button">📋 Copy restore code</button>
+        <button class="btn btn-ghost btn-sm" id="walletRestoreBtn" type="button">↺ Restore code</button>
+      </div>
+      <div class="wallet-record">
+        <div class="record-section">
+          <span class="record-label">Solo</span>
+          <div><span>Games</span><b id="recSoloGames">0</b></div>
+          <div><span>Wins</span><b id="recSoloWins">0</b></div>
+          <div><span>Win rate</span><b id="recSoloRate">—</b></div>
+        </div>
+        <div class="record-section">
+          <span class="record-label">Rooms</span>
+          <div><span>Games</span><b id="recRoomGames">0</b></div>
+          <div><span>Wins</span><b id="recRoomWins">0</b></div>
+          <div><span>Gross</span><b id="recRoomEarned">0</b></div>
+          <div><span>Net</span><b id="recRoomNet" class="net">0</b></div>
+          <div><span>Return</span><b id="recRoomReturn">—</b></div>
+        </div>
+      </div>
+      <p class="wallet-note">Leaderboard standing travels with your restore code.</p>
+      <p class="wallet-note" id="walletNote">Saved in this browser. A restore code carries your points and record to another device.</p>
+      <p class="wallet-code" id="walletCodeOut" hidden></p>
+      <div class="wallet-restore" id="walletRestore" hidden>
+        <label class="room-field">Restore code
+          <input id="walletCodeInput" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="GH2-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX">
+        </label>
+        <div class="wallet-confirm-row">
+          <button class="btn btn-ghost btn-sm" id="walletCheck" type="button">Check code</button>
+        </div>
+        <p class="wallet-preview" id="walletPreview" hidden></p>
+        <div class="wallet-confirm" id="walletConfirm" hidden>
+          <button class="btn btn-primary btn-sm" id="walletApply" type="button">Replace my balance</button>
+          <button class="btn btn-ghost btn-sm" id="walletCancel" type="button">Cancel</button>
+        </div>
+      </div>
+      <div class="wallet-gift">
+        <label class="room-field">Redeem a gift code
+          <input id="giftInput" autocomplete="off" spellcheck="false" placeholder="GH2G.1.promo.…">
+        </label>
+        <div class="wallet-confirm-row">
+          <button class="btn btn-ghost btn-sm" id="giftRedeemBtn" type="button">Redeem gift</button>
+        </div>
+        <p class="wallet-preview" id="giftResult" hidden></p>
+      </div>
+    </div>
+
+    <details class="econ-help">
+      <summary>How points work</summary>
+      <ul>
+        <li>Points are score tokens: <b>no cash value</b>, and nothing here can be bought, sold, transferred or cashed out.</li>
+        <li>Every card has a points cost. Those points go into the pot.</li>
+        <li>The pot pays the top three bingos (55 / 25 / 12); whatever is left rolls into the bonus pot, which pays a fast bingo and then resets.</li>
+        <li>Bots pay the card cost like everyone else but <b>never collect their winnings</b> — their share goes to the bonus pot.</li>
+        <li>Your record — games played, games won, points earned — is your leaderboard standing, and the restore code carries it to another device.</li>
+      </ul>
+      <p class="econ-link"><a href="terms.html#points">No cash value — read the terms</a></p>
+    </details>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const grid = $('grid'), overlay = $('overlay'), startBtn = $('startBtn'), overlayAlt = $('overlayAlt');
+  const ovIco = $('ovIco'), ovTitle = $('ovTitle'), ovText = $('ovText');
+  const callLetter = $('callLetter'), callNum = $('callNum');
+  const callTitle = $('callTitle'), callNote = $('callNote');
+  const statusEl = $('status'), historyEl = $('history');
+  const ballsEl = $('balls'), lastEl = $('last'), bestEl = $('best'), winsEl = $('wins');
+  const bestChip = $('bestChip'), winsChip = $('winsChip');
+  const streakChip = $('streakChip'), streakEl = $('streak'), freezeTag = $('freezeTag');
+  const dailyStrip = $('dailyStrip'), dailyHistoryEl = $('dailyHistory');
+  const freezeReminder = $('freezeReminder'), freezeReminderText = $('freezeReminderText');
+  const freezeSnoozeBtn = $('freezeSnoozeBtn');
+  const creditsEl = $('credits'), potEl = $('pot'), creditsChip = $('creditsChip'), potChip = $('potChip');
+  const cardTabsEl = $('cardTabs'), jackpotEl = $('roomJackpot'), jackpotAmtEl = $('jackpotAmt');
+  const lobbyPot = $('lobbyPot');
+  const newBtn = $('newBtn'), roomsBtn = $('roomsBtn');
+  const roomBar = $('roomBar'), roomCodeEl = $('roomCode'), roomRoleEl = $('roomRole');
+  const roomPlayersEl = $('roomPlayers'), chatBtn = $('chatBtn'), chatUnreadEl = $('chatUnread');
+  const leaveBtn = $('leaveBtn'), chatDrawer = $('chatDrawer'), chatLog = $('chatLog');
+  const roomModal = $('roomModal'), roomSetup = $('roomSetup'), roomLobby = $('roomLobby');
+  const roomError = $('roomError'), roomTitle = $('roomTitle');
+  const lobbyCode = $('lobbyCode'), lobbyPlayers = $('lobbyPlayers'), lobbyCount = $('lobbyCount');
+  const hostSettings = $('hostSettings'), guestSettings = $('guestSettings');
+  const startRoomBtn = $('startRoomBtn'), lobbyWait = $('lobbyWait'), lobbyChat = $('lobbyChat');
+  const walletCreditsEl = $('walletCredits'), walletCopyBtn = $('walletCopy');
+  const walletRestoreBtn = $('walletRestoreBtn'), walletRestore = $('walletRestore');
+  const walletNote = $('walletNote'), walletCodeOut = $('walletCodeOut');
+  const walletCodeInput = $('walletCodeInput'), walletPreview = $('walletPreview');
+  const walletConfirm = $('walletConfirm'), walletCheckBtn = $('walletCheck');
+  const walletApplyBtn = $('walletApply'), walletCancelBtn = $('walletCancel');
+  const recSoloGamesEl = $('recSoloGames'), recSoloWinsEl = $('recSoloWins'), recSoloRateEl = $('recSoloRate');
+  const recRoomGamesEl = $('recRoomGames'), recRoomWinsEl = $('recRoomWins'), recRoomEarnedEl = $('recRoomEarned');
+  const recRoomNetEl = $('recRoomNet'), recRoomReturnEl = $('recRoomReturn');
+  const giftInput = $('giftInput'), giftRedeemBtn = $('giftRedeemBtn'), giftResult = $('giftResult');
+
+  const LETTERS = ['B', 'I', 'N', 'G', 'O'];
+  const LINES = [];
+  for (let r = 0; r < 5; r++) LINES.push([0, 1, 2, 3, 4].map(c => r * 5 + c));
+  for (let c = 0; c < 5; c++) LINES.push([0, 1, 2, 3, 4].map(r => r * 5 + c));
+  LINES.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+
+  const ROW = r => [0, 1, 2, 3, 4].map(c => r * 5 + c);
+  const COL = c => [0, 1, 2, 3, 4].map(r => r * 5 + c);
+  const union = (...lists) => [...new Set(lists.flat())];
+
+  /* Every pattern after 'line' is a fixed set of card indices. 'line' accepts
+     any of the 12 LINES. budget = calls in a round, jackpot = calls inside
+     which a bingo still counts as "early"; freeCenter false makes the middle
+     square a live number (Bullseye). */
+  const PATTERNS = {
+    line:     {label: 'Any line', note: 'any row, column or diagonal', budget: 32, jackpot: 12},
+    corners:  {label: 'Four corners', note: 'all four corner squares', budget: 48, jackpot: 28, cells: [0, 4, 20, 24]},
+    x:        {label: 'X', note: 'both diagonals', budget: 58, jackpot: 38, cells: [0, 6, 12, 18, 24, 4, 8, 16, 20]},
+    h:        {label: 'H', note: 'both side columns and the middle row', budget: 60, jackpot: 40, cells: union(COL(0), COL(4), [11, 12, 13])},
+    t:        {label: 'T', note: 'the top row and the middle column', budget: 58, jackpot: 38, cells: union(ROW(0), COL(2))},
+    ladder:   {label: 'Climb the ladder', note: 'the climbing staircase of squares', budget: 58, jackpot: 38, cells: [20, 15, 16, 11, 12, 7, 8, 3, 4]},
+    bullseye: {label: 'Bullseye', note: 'the 3×3 target around the centre — the centre must be called', budget: 58, jackpot: 36, cells: [6, 7, 8, 11, 12, 13, 16, 17, 18], freeCenter: false},
+    blackout: {label: 'Blackout', note: 'every square on the card', budget: 75, jackpot: 52, cells: Array.from({length: 25}, (_, i) => i)}
+  };
+  const PATTERN_ORDER = Object.keys(PATTERNS);
+
+  /* One pattern per local calendar day, cycling through the table. The day
+     number is computed from the local Y/M/D in UTC so DST cannot skip or
+     repeat a pattern. */
+  const dailyPatternKey = (date = new Date()) => {
+    const d = date instanceof Date ? date : new Date(date);
+    const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    return PATTERN_ORDER[((day % PATTERN_ORDER.length) + PATTERN_ORDER.length) % PATTERN_ORDER.length];
+  };
+  const resolvePatternSelection = v => (v === 'daily' ? dailyPatternKey() : (v in PATTERNS ? v : 'line'));
+  const PACES = {chill: 1700, classic: 1200, fast: 800};
+  const PACE_LABELS = {chill: 'Chill', classic: 'Classic', fast: 'Fast'};
+  const BOT_NAMES = ['Rex', 'Nova', 'Pip'];
+  const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const MAX_PLAYERS = 8;
+  const BEST_KEY = 'gh.bingo2.best';
+  const NAME_KEY = 'gh.bingo2.name';
+
+  /* points + pot economy (score tokens only, never purchasable or redeemable) */
+  const MAX_CREDITS = 10000000;
+  const START_CREDITS = 1000;
+  const BOT_CREDITS = 3000;
+  const RAKE = 0.06;              // half to the jackpot, half removed
+  const JACKPOT_CONTRIB = 0.05;   // extra slice of every entry fee
+  const JACKPOT_SEED_MULT = 10;   // seed = 10 x the per-card cost
+  const PAYOUT_SPLIT = [0.55, 0.25, 0.12];
+
+  const SOLO_PATTERN_KEY = 'gh.bingo2.soloPattern';
+  const DAILY_KEY = 'gh.bingo2.daily';
+  let soloPattern = (() => {
+    const saved = localStorage.getItem(SOLO_PATTERN_KEY);
+    return saved && saved in PATTERNS ? saved : dailyPatternKey();
+  })();
+  const bestByPattern = {};
+  const bestKeyFor = p => BEST_KEY + '.' + p;
+  const currentBest = () => (Number.isFinite(bestByPattern[soloPattern]) ? bestByPattern[soloPattern] : null);
+
+  function loadBests() {
+    Object.keys(PATTERNS).forEach(p => {
+      const v = parseInt(localStorage.getItem(bestKeyFor(p)), 10);
+      bestByPattern[p] = Number.isFinite(v) && v > 0 ? v : null;
+    });
+    /* an older single best belongs to any-line; keep it instead of losing it */
+    const legacy = parseInt(localStorage.getItem(BEST_KEY), 10);
+    if (bestByPattern.line === null && Number.isFinite(legacy) && legacy > 0) {
+      bestByPattern.line = legacy;
+      try { localStorage.setItem(bestKeyFor('line'), String(legacy)); } catch (e) {}
+    }
+  }
+
+  let cells = [], pool = [], calledSet = new Set();
+  let balls = 0, running = false, finished = false, timer = null, last = null;
+  let overlayAction = () => {};
+
+  let mode = 'solo';
+  let peer = null, hostConn = null;
+  const hostConns = new Map();
+  let roomPlayers = new Map();
+  let roster = [];
+  let roomCode = '', selfId = 'host', myName = '';
+  let roomPattern = 'line', roomPace = PACES.classic, roomBots = 0;
+  let roomCalled = new Set(), roomBalls = 0, roomLast = null, roomPool = [];
+  let roomTimer = null, roomRunning = false, roomFinished = false, roomRound = 0;
+  let myRound = 0;
+  let myCredits = START_CREDITS;
+  let myStats = {solo: {games: 0, wins: 0}, room: {games: 0, wins: 0, earned: 0, staked: 0}};
+  let roomStake = 10, roomCards = 1, roomPot = 0, roomJackpot = 0, roomBudget = 0, roomRake = 0;
+  let myCardIndex = 0, myCards = [], roomSeatIds = [];
+  let chat = [], unread = 0, chatOpen = false, lastChatAt = 0;
+  let connecting = false;
+  let joinWait = null;
+  let peerLibPromise = null;
+  let leaving = false;
+  let pendingDaubs = new Set();
+  let hostPingTimer = null;
+  let guestPingTimer = null;
+  let lastHostSeen = 0;
+  let hostHidden = false;
+
+  const letterFor = n => LETTERS[Math.floor((n - 1) / 15)];
+  const shuffle = a => {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const isRoom = () => mode === 'host' || mode === 'guest';
+  const patternSpec = p => PATTERNS[p] || PATTERNS.line;
+  const patternLabel = p => patternSpec(p).label;
+  const patternBudget = p => patternSpec(p).budget || 32;
+  const patternFreeCenter = p => patternSpec(p).freeCenter !== false;
+  const paceFor = v => PACES[v] || PACES.classic;
+
+  function cleanName(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 14);
+  }
+
+  function cleanText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  }
+
+  function myWins() {
+    if (mode === 'host') {
+      const p = roomPlayers.get('host');
+      return p ? p.wins : 0;
+    }
+    if (mode === 'guest') {
+      const p = roster.find(x => x.id === selfId);
+      return p ? p.wins : 0;
+    }
+    return 0;
+  }
+
+  function makeCard(freeCenter = true) {
+    const card = Array(25);
+    for (let c = 0; c < 5; c++) {
+      const nums = shuffle(Array.from({length: 15}, (_, i) => c * 15 + i + 1)).slice(0, 5).sort((a, b) => a - b);
+      for (let r = 0; r < 5; r++) {
+        const free = freeCenter && r === 2 && c === 2;
+        card[r * 5 + c] = {n: free ? 0 : nums[r], col: c, row: r, free, daubed: free};
+      }
+    }
+    return card;
+  }
+
+  function cardFromNumbers(nums) {
+    const list = Array.isArray(nums) ? nums : [];
+    const card = Array(25);
+    for (let i = 0; i < 25; i++) {
+      /* the host sends 0 for a free centre; a real centre number means the
+         pattern needs it called (Bullseye). */
+      const free = i === 12 && !(Number(list[i]) > 0);
+      card[i] = {n: free ? 0 : (Number(list[i]) || 0), col: i % 5, row: Math.floor(i / 5), free, daubed: free};
+    }
+    return card;
+  }
+
+  const cardNumbers = card => card.map(c => c.n);
+
+  function findWin(card, pattern) {
+    const spec = patternSpec(pattern);
+    if (!spec.cells) {
+      for (const line of LINES) {
+        if (line.every(i => card[i].daubed)) return line;
+      }
+      return null;
+    }
+    return spec.cells.every(i => card[i].daubed) ? spec.cells.slice() : null;
+  }
+
+  /* ---------------- shared board UI ---------------- */
+
+  function renderCard() {
+    grid.innerHTML = '';
+    cells.forEach((cell, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bingo-cell' + (cell.free ? ' free' : '') + (cell.daubed ? ' daubed' : '') + (cell.pending ? ' pending' : '');
+      b.textContent = cell.free ? 'FREE' : cell.n;
+      b.dataset.i = i;
+      b.setAttribute('aria-label', cell.free ? 'Free space — already daubed' : `${LETTERS[cell.col]} ${cell.n}${cell.daubed ? ', daubed' : ''}`);
+      b.addEventListener('click', () => handleCell(i));
+      grid.appendChild(b);
+    });
+    renderCardTabs();
+  }
+
+  function renderCardTabs() {
+    const list = myCardsList();
+    if (!isRoom() || list.length < 2) {
+      cardTabsEl.hidden = true;
+      cardTabsEl.innerHTML = '';
+      return;
+    }
+    cardTabsEl.hidden = false;
+    cardTabsEl.innerHTML = '';
+    list.forEach((card, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bingo-card-tab' + (i === myCardIndex ? ' on' : '');
+      b.textContent = 'Card ' + (i + 1) + (findWin(card, roomPattern) ? ' ✓' : '');
+      b.addEventListener('click', () => showCard(i));
+      cardTabsEl.appendChild(b);
+    });
+  }
+
+  function showCard(i) {
+    const list = myCardsList();
+    if (!list[i]) return;
+    myCardIndex = i;
+    cells = list[i];
+    renderCard();
+    status(`Showing card ${i + 1} of ${list.length}.`);
+  }
+
+  function refreshCell(i) {
+    const el = grid.children[i];
+    const cell = cells[i];
+    if (!el || !cell) return;
+    el.classList.toggle('daubed', !!cell.daubed);
+    el.classList.toggle('pending', !!cell.pending);
+    el.setAttribute('aria-label', cell.free ? 'Free space — already daubed' : `${LETTERS[cell.col]} ${cell.n}${cell.daubed ? ', daubed' : ''}`);
+  }
+
+  function updateHud() {
+    ballsEl.textContent = balls;
+    lastEl.textContent = last ? last.l + ' ' + last.n : '—';
+    const best = currentBest();
+    bestEl.textContent = best ? best + ' balls' : '—';
+    winsEl.textContent = myWins();
+    creditsEl.textContent = String(myCredits);
+    potEl.textContent = String(roomPot);
+    potChip.hidden = !isRoom() || roomStake === 0;
+    jackpotEl.hidden = !isRoom() || roomJackpot <= 0;
+    if (!jackpotEl.hidden) jackpotAmtEl.textContent = String(roomJackpot);
+    renderFreezeReminder();
+  }
+
+  function clampCredits(v) {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(n, MAX_CREDITS);
+  }
+
+  /* ---------------- wallet: browser save + restore code ---------------- */
+
+  /* Public key from tools/mint.html ("Copy snippet"). Paste it below and this
+     copy redeems that operator's signed gift codes; leave null to keep grants
+     off. The key is public — only the matching private key can mint. */
+  const GRANT_KEY = null;
+  const GRANT_CAPS = {promo: 1000, op: 10000, prize: 25000};
+  const CLAIMS_KEY = 'gh.bingo2.claims';
+
+  const WALLET_KEY = 'gh.bingo2.wallet';
+  const WALLET_VERSION = 5;
+  const WALLET_PAD = [0x5a, 0xc3, 0x27, 0x91, 0x6e, 0xb4, 0x3d, 0x88, 0xf1];
+  const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    let c = 0xffffffff;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  function toBase32(bytes) {
+    let bits = 0, value = 0, out = '';
+    for (let i = 0; i < bytes.length; i++) {
+      value = (value << 8) | bytes[i];
+      bits += 8;
+      while (bits >= 5) {
+        out += B32[(value >>> (bits - 5)) & 31];
+        bits -= 5;
+      }
+    }
+    if (bits > 0) out += B32[(value << (5 - bits)) & 31];
+    return out;
+  }
+
+  function fromBase32(text) {
+    let bits = 0, value = 0;
+    const out = [];
+    for (let i = 0; i < text.length; i++) {
+      const idx = B32.indexOf(text[i]);
+      if (idx < 0) return null;
+      value = (value << 5) | idx;
+      bits += 5;
+      if (bits >= 8) {
+        out.push((value >>> (bits - 8)) & 255);
+        bits -= 8;
+      }
+    }
+    return out;
+  }
+
+  /* The daily streak is stored with a local YYYY-MM-DD key; codes carry the
+     same calendar day as a 16-bit day number so the codec stays compact. */
+  const dailyOrdinal = key => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ''));
+    if (!m) return 0;
+    const n = Math.floor(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000);
+    return n > 0 && n <= 65535 ? n : 0;
+  };
+  const ordinalDaily = n => {
+    if (!n) return '';
+    const d = new Date(n * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  };
+
+  function walletCodeFor(points, stats, daily) {
+    const amount = clampCredits(points);
+    const day = daily || {};
+    const ord = dailyOrdinal(day.last);
+    const streak = Math.max(0, Math.min(255, Math.floor(Number(day.streak) || 0)));
+    const best = Math.max(0, Math.min(255, Math.floor(Number(day.best) || 0)));
+    const solo = (stats && stats.solo) || {};
+    const room = (stats && stats.room) || {};
+    const count = v => Math.max(0, Math.min(65535, Math.floor(Number(v) || 0)));
+    const earned = clampCredits(room.earned);
+    const staked = clampCredits(room.staked);
+    const payload = [
+      WALLET_VERSION,
+      (amount >>> 24) & 255, (amount >>> 16) & 255, (amount >>> 8) & 255, amount & 255,
+      (count(solo.games) >>> 8) & 255, count(solo.games) & 255,
+      (count(solo.wins) >>> 8) & 255, count(solo.wins) & 255,
+      (earned >>> 24) & 255, (earned >>> 16) & 255, (earned >>> 8) & 255, earned & 255,
+      (staked >>> 24) & 255, (staked >>> 16) & 255, (staked >>> 8) & 255, staked & 255,
+      (count(room.games) >>> 8) & 255, count(room.games) & 255,
+      (count(room.wins) >>> 8) & 255, count(room.wins) & 255,
+      (ord >>> 8) & 255, ord & 255,
+      streak, best,
+      Math.min(1, Math.max(0, Math.floor(Number(day.freezes) || 0)))
+    ];
+    const sum = crc32(payload);
+    const bytes = payload.concat([(sum >>> 24) & 255, (sum >>> 16) & 255, (sum >>> 8) & 255, sum & 255]);
+    const mixed = bytes.map((b, i) => b ^ WALLET_PAD[i % WALLET_PAD.length]);
+    return 'GH2-' + toBase32(mixed).match(/.{4}/g).join('-');
+  }
+
+  function parseWalletCode(input) {
+    const raw = String(input || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const body = raw.slice(0, 3) === 'GH2' ? raw.slice(3) : raw;
+    const text = body.replace(/0/g, 'O').replace(/1/g, 'I');
+    const bytes = fromBase32(text);
+    if (!bytes || ![9, 17, 22, 25, 30].includes(bytes.length)) {
+      return {ok: false, error: 'That is not a Bingo 2 restore code.'};
+    }
+    const mixed = bytes.map((b, i) => b ^ WALLET_PAD[i % WALLET_PAD.length]);
+    const payload = mixed.slice(0, mixed.length - 4);
+    const sum = ((mixed[mixed.length - 4] << 24) | (mixed[mixed.length - 3] << 16) |
+      (mixed[mixed.length - 2] << 8) | mixed[mixed.length - 1]) >>> 0;
+    if (crc32(payload) !== sum) return {ok: false, error: 'That code looks mistyped — check it and try again.'};
+    if (payload.length === 5 && payload[0] === 1) {
+      const credits = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
+      return {ok: true, points: clampCredits(credits), solo: {games: 0, wins: 0}, room: {games: 0, wins: 0, earned: 0, staked: 0}, daily: {last: '', streak: 0, best: 0, freezes: 0}, legacy: true};
+    }
+    if (payload.length === 13 && payload[0] === 2) {
+      const points = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
+      const earned = ((payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8]) >>> 0;
+      const games = (payload[9] << 8) | payload[10];
+      const wins = (payload[11] << 8) | payload[12];
+      return {ok: true, points: clampCredits(points), solo: {games: 0, wins: 0}, room: {games, wins, earned: clampCredits(earned), staked: 0}, daily: {last: '', streak: 0, best: 0, freezes: 0}, legacy: false};
+    }
+    if (payload.length === 18 && payload[0] === 3) {
+      const points = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
+      const earned = ((payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8]) >>> 0;
+      const staked = ((payload[9] << 24) | (payload[10] << 16) | (payload[11] << 8) | payload[12]) >>> 0;
+      const games = (payload[13] << 8) | payload[14];
+      const wins = (payload[15] << 8) | payload[16];
+      return {ok: true, points: clampCredits(points), solo: {games: 0, wins: 0}, room: {games, wins, earned: clampCredits(earned), staked: clampCredits(staked)}, daily: {last: '', streak: 0, best: 0, freezes: 0}, legacy: false};
+    }
+    if (payload.length === 21 && payload[0] === 4) {
+      const points = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
+      const soloGames = (payload[5] << 8) | payload[6];
+      const soloWins = (payload[7] << 8) | payload[8];
+      const earned = ((payload[9] << 24) | (payload[10] << 16) | (payload[11] << 8) | payload[12]) >>> 0;
+      const staked = ((payload[13] << 24) | (payload[14] << 16) | (payload[15] << 8) | payload[16]) >>> 0;
+      const roomGames = (payload[17] << 8) | payload[18];
+      const roomWins = (payload[19] << 8) | payload[20];
+      return {
+        ok: true,
+        points: clampCredits(points),
+        solo: {games: soloGames, wins: soloWins},
+        room: {games: roomGames, wins: roomWins, earned: clampCredits(earned), staked: clampCredits(staked)},
+        daily: {last: '', streak: 0, best: 0, freezes: 0},
+        legacy: false
+      };
+    }
+    if (payload.length !== 26 || payload[0] !== WALLET_VERSION) {
+      return {ok: false, error: 'That code is from a different version of the game.'};
+    }
+    const points = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
+    const soloGames = (payload[5] << 8) | payload[6];
+    const soloWins = (payload[7] << 8) | payload[8];
+    const earned = ((payload[9] << 24) | (payload[10] << 16) | (payload[11] << 8) | payload[12]) >>> 0;
+    const staked = ((payload[13] << 24) | (payload[14] << 16) | (payload[15] << 8) | payload[16]) >>> 0;
+    const roomGames = (payload[17] << 8) | payload[18];
+    const roomWins = (payload[19] << 8) | payload[20];
+    const dayNo = (payload[21] << 8) | payload[22];
+    const dayStreak = payload[23];
+    const dayBest = payload[24];
+    const dayFreeze = payload[25] ? 1 : 0;
+    return {
+      ok: true,
+      points: clampCredits(points),
+      solo: {games: soloGames, wins: soloWins},
+      room: {games: roomGames, wins: roomWins, earned: clampCredits(earned), staked: clampCredits(staked)},
+      daily: {last: ordinalDaily(dayNo), streak: dayStreak, best: Math.max(dayBest, dayStreak), freezes: dayFreeze},
+      legacy: false
+    };
+  }
+
+  function readWallet() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(WALLET_KEY) || 'null');
+      if (!raw || typeof raw !== 'object') return null;
+      const count = v => Math.max(0, Math.min(65535, Math.floor(Number(v) || 0)));
+      if (raw.v === 1) return {points: clampCredits(raw.credits), solo: {games: 0, wins: 0}, room: {games: 0, wins: 0, earned: 0, staked: 0}};
+      if (raw.v === 2 || raw.v === 3) {
+        return {
+          points: clampCredits(raw.points),
+          solo: {games: 0, wins: 0},
+          room: {games: count(raw.games), wins: count(raw.wins), earned: clampCredits(raw.earned), staked: clampCredits(raw.staked)}
+        };
+      }
+      if (raw.v !== 4 && raw.v !== WALLET_VERSION) return null;
+      const solo = raw.solo && typeof raw.solo === 'object' ? raw.solo : {};
+      const room = raw.room && typeof raw.room === 'object' ? raw.room : {};
+      return {
+        points: clampCredits(raw.points),
+        solo: {games: count(solo.games), wins: count(solo.wins)},
+        room: {games: count(room.games), wins: count(room.wins), earned: clampCredits(room.earned), staked: clampCredits(room.staked)}
+      };
+    } catch (e) { return null; }
+  }
+
+  function persistWallet() {
+    try {
+      localStorage.setItem(WALLET_KEY, JSON.stringify({
+        v: WALLET_VERSION,
+        points: myCredits,
+        solo: {games: myStats.solo.games, wins: myStats.solo.wins},
+        room: {games: myStats.room.games, wins: myStats.room.wins, earned: myStats.room.earned, staked: myStats.room.staked},
+        updated: Date.now()
+      }));
+    } catch (e) { /* private mode or full quota */ }
+  }
+
+  function recordRoomRound(won, earned, staked) {
+    const room = myStats.room;
+    room.games += 1;
+    if (won) room.wins += 1;
+    const gain = Math.max(0, Math.floor(Number(earned) || 0));
+    if (gain) room.earned += gain;
+    const paid = Math.max(0, Math.floor(Number(staked) || 0));
+    if (paid) room.staked += paid;
+    persistWallet();
+    renderRecord();
+  }
+
+  /* Solo rounds have no card cost and move no points: only the games/wins
+     standings are affected. */
+  function recordSoloRound(won) {
+    myStats.solo.games += 1;
+    if (won) myStats.solo.wins += 1;
+    persistWallet();
+    renderRecord();
+  }
+
+  function renderRecord() {
+    if (!recSoloGamesEl) return;
+    const solo = myStats.solo, room = myStats.room;
+    recSoloGamesEl.textContent = String(solo.games);
+    recSoloWinsEl.textContent = String(solo.wins);
+    recSoloRateEl.textContent = solo.games ? Math.round((solo.wins / solo.games) * 100) + '%' : '—';
+    recRoomGamesEl.textContent = String(room.games);
+    recRoomWinsEl.textContent = String(room.wins);
+    recRoomEarnedEl.textContent = room.earned.toLocaleString('en-US');
+    const net = room.earned - room.staked;
+    recRoomNetEl.textContent = net > 0
+      ? '+' + net.toLocaleString('en-US')
+      : net < 0 ? '−' + Math.abs(net).toLocaleString('en-US') : '0';
+    recRoomNetEl.classList.toggle('up', net > 0);
+    recRoomNetEl.classList.toggle('down', net < 0);
+    recRoomNetEl.title = `${room.earned.toLocaleString('en-US')} won − ${room.staked.toLocaleString('en-US')} spent on cards`;
+    recRoomReturnEl.textContent = room.staked > 0
+      ? Math.round((room.earned / room.staked) * 100) + '%'
+      : '—';
+    recRoomReturnEl.title = room.staked > 0
+      ? `${room.earned.toLocaleString('en-US')} points won on ${room.staked.toLocaleString('en-US')} spent on cards`
+      : 'Play a paid table to see your return on card costs.';
+  }
+
+  let walletNoteMode = '';
+  let pendingRestore = null;
+
+  function setMyCredits(value, force) {
+    const next = clampCredits(value);
+    const changed = next !== myCredits;
+    myCredits = next;
+    if (changed || force) {
+      persistWallet();
+      renderWallet();
+  renderRecord();
+    }
+    return changed;
+  }
+
+  function renderWallet() {
+    if (!walletCreditsEl) return;
+    walletCreditsEl.textContent = myCredits.toLocaleString('en-US');
+    renderRecord();
+    walletRestoreBtn.disabled = isRoom() || connecting;
+    giftRedeemBtn.disabled = isRoom() || connecting;
+    const nextMode = isRoom() ? 'room' : 'solo';
+    if (nextMode !== walletNoteMode) {
+      walletNoteMode = nextMode;
+      walletNote.textContent = isRoom()
+        ? "This room's host keeps the ledger — leave the room to restore a code."
+        : 'Saved in this browser. A restore code carries your points, record and daily streak to another device.';
+    }
+  }
+
+  function copyWalletCode() {
+    const code = walletCodeFor(myCredits, myStats, readDaily());
+    walletCodeOut.textContent = code;
+    walletCodeOut.hidden = false;
+    const done = () => { walletNote.textContent = `Code copied — it restores ${myCredits.toLocaleString('en-US')} points, your record and daily streak. Keep it private.`; };
+    const fail = () => { walletNote.textContent = 'Copy the code below and keep it somewhere safe.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, fail);
+    else fail();
+  }
+
+  function openWalletRestore() {
+    if (isRoom() || connecting) return;
+    walletRestore.hidden = false;
+    walletPreview.hidden = true;
+    walletConfirm.hidden = true;
+    walletCodeInput.value = '';
+    walletCodeInput.focus();
+  }
+
+  function checkWalletCode() {
+    const parsed = parseWalletCode(walletCodeInput.value);
+    walletPreview.hidden = false;
+    walletConfirm.hidden = true;
+    walletPreview.classList.remove('good', 'bad');
+    if (!parsed.ok) {
+      pendingRestore = null;
+      walletPreview.classList.add('bad');
+      walletPreview.textContent = parsed.error;
+      return;
+    }
+    pendingRestore = parsed;
+    const bits = [];
+    if (parsed.solo.games) bits.push(`${parsed.solo.games} solo games (${parsed.solo.wins} won)`);
+    if (parsed.room.games) bits.push(`${parsed.room.games} room games (${parsed.room.wins} won)`);
+    if (parsed.room.earned) bits.push(`${parsed.room.earned.toLocaleString('en-US')} points won on tables`);
+    const record = bits.length ? ` It also carries ${bits.join(', ')}.` : '';
+    const day = parsed.daily || {last: '', streak: 0, best: 0};
+    const gap = streakAgo(day);
+    const streakText = day.streak > 0
+      ? (gap !== null && gap > 1
+        ? ` Its ${day.streak}-day daily streak ended ${lapsedWhen(gap)}, so it will not count as a live run — your best of ${Math.max(day.best, day.streak)} still comes across.`
+        : ` It carries a ${day.streak}-day daily streak${day.best > day.streak ? ` (best ${day.best})` : ''}.`)
+      : '';
+    const freezeText = day.freezes ? ' It also carries a streak freeze.' : '';
+    walletPreview.textContent = `This code restores ${parsed.points.toLocaleString('en-US')} points.${record}${streakText}${freezeText} Replace your current ${myCredits.toLocaleString('en-US')} points?`;
+    walletConfirm.hidden = false;
+  }
+
+  function applyWalletCode() {
+    if (!pendingRestore || isRoom()) return;
+    const restored = pendingRestore;
+    pendingRestore = null;
+    setMyCredits(restored.points, true);
+    const solo = restored.solo || {games: 0, wins: 0};
+    const room = restored.room || {games: 0, wins: 0, earned: 0, staked: 0};
+    myStats.solo.games = Math.max(myStats.solo.games, solo.games || 0);
+    myStats.solo.wins = Math.max(myStats.solo.wins, solo.wins || 0);
+    myStats.room.games = Math.max(myStats.room.games, room.games || 0);
+    myStats.room.wins = Math.max(myStats.room.wins, room.wins || 0);
+    myStats.room.earned = Math.max(myStats.room.earned, room.earned || 0);
+    myStats.room.staked = Math.max(myStats.room.staked, room.staked || 0);
+    persistWallet();
+    renderRecord();
+    const incoming = restored.daily || {last: '', streak: 0, best: 0, freezes: 0};
+    const local = readDaily();
+    const best = Math.max(local.best, local.streak, incoming.best, incoming.streak);
+    let last = local.last, streak = local.streak;
+    if (incoming.last && incoming.last > last) {
+      last = incoming.last;
+      streak = incoming.streak;
+    } else if (incoming.last && incoming.last === last) {
+      streak = Math.max(streak, incoming.streak);
+    }
+    const merged = {last, streak, best: Math.max(best, streak), freezes: Math.max(local.freezes, incoming.freezes) ? 1 : 0};
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(merged)); } catch (e) {}
+    renderStreak();
+    const mergedGap = streakAgo(merged);
+    const lapsed = incoming.streak > 0 && mergedGap !== null && mergedGap > 1;
+    const freezeKept = merged.freezes > 0 && incoming.freezes > 0;
+    walletCodeInput.value = '';
+    walletConfirm.hidden = true;
+    walletPreview.hidden = false;
+    walletPreview.classList.remove('bad');
+    walletPreview.classList.add('good');
+    walletPreview.textContent = lapsed
+      ? `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings. That code's daily streak ended ${merged.last}, so only your best of ${merged.best} was kept.${freezeKept ? ' Its streak freeze came across too.' : ''}`
+      : `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings, and your daily streak.${freezeKept ? ' Your streak freeze came across too.' : ''}`;
+    walletCodeOut.hidden = true;
+    updateHud();
+  }
+
+  /* ---------------- signed gift grants ---------------- */
+
+  const textEncoder = new TextEncoder();
+  const textDecoder = new TextDecoder();
+  let grantKeyPromise = null;
+
+  function b64uDecode(text) {
+    const p = String(text).replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(p + '='.repeat((4 - (p.length % 4)) % 4));
+    return Uint8Array.from(bin, c => c.charCodeAt(0));
+  }
+
+  async function grantVerifyKey() {
+    if (!GRANT_KEY) return null;
+    if (!grantKeyPromise) {
+      if (!window.crypto || !crypto.subtle) {
+        grantKeyPromise = Promise.resolve(null);
+      } else {
+        grantKeyPromise = crypto.subtle
+          .importKey('jwk', GRANT_KEY, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify'])
+          .catch(() => null);
+      }
+    }
+    return grantKeyPromise;
+  }
+
+  async function verifyGrantToken(token) {
+    const parts = String(token || '').trim().split('.');
+    if (parts.length !== 5) return {ok: false, reason: 'A gift code has five dot-separated parts.'};
+    const tag = parts[0], version = parts[1], role = parts[2], body = parts[3], sig = parts[4];
+    if (tag !== 'GH2G') return {ok: false, reason: 'That is not a Bingo 2 gift code.'};
+    if (version !== '1') return {ok: false, reason: 'That gift code is from a different version of the game.'};
+    if (!GRANT_CAPS[role]) return {ok: false, reason: 'That gift code has an unknown role.'};
+    let payload;
+    try { payload = JSON.parse(textDecoder.decode(b64uDecode(body))); } catch (e) { return {ok: false, reason: 'That gift code is unreadable.'}; }
+    const key = await grantVerifyKey();
+    if (!key) return {ok: false, reason: 'Gift codes are unavailable in this browser.'};
+    let valid = false;
+    try {
+      valid = await crypto.subtle.verify(
+        {name: 'ECDSA', hash: 'SHA-256'},
+        key,
+        b64uDecode(sig),
+        textEncoder.encode(`${tag}.${version}.${role}.${body}`)
+      );
+    } catch (e) { valid = false; }
+    if (!valid) return {ok: false, reason: 'That gift code failed its signature check.'};
+    if (!Number.isFinite(payload.c) || payload.c < 1) return {ok: false, reason: 'That gift code has an invalid amount.'};
+    if (payload.c > GRANT_CAPS[role]) return {ok: false, reason: `That gift is over the ${role} cap of ${GRANT_CAPS[role].toLocaleString()} points.`};
+    if (!(Number(payload.e) > Date.now())) return {ok: false, reason: 'That gift code has expired.'};
+    return {ok: true, payload};
+  }
+
+  function readClaims() {
+    try {
+      const list = JSON.parse(localStorage.getItem(CLAIMS_KEY) || '[]');
+      return Array.isArray(list) ? list.filter(n => typeof n === 'string').slice(-200) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveClaim(nonce) {
+    if (typeof nonce !== 'string' || !nonce) return;
+    const list = readClaims();
+    if (!list.includes(nonce)) list.push(nonce);
+    try { localStorage.setItem(CLAIMS_KEY, JSON.stringify(list.slice(-200))); } catch (e) {}
+  }
+
+  async function redeemGrant(token) {
+    if (isRoom()) return {ok: false, reason: 'Leave the room to redeem a gift — the host keeps the ledger in here.'};
+    if (!GRANT_KEY) return {ok: false, reason: 'This copy of Bingo 2 has no grant key configured, so gift codes are off.'};
+    const parsed = await verifyGrantToken(token);
+    if (!parsed.ok) return parsed;
+    if (readClaims().includes(parsed.payload.n)) {
+      return {ok: false, reason: 'That gift code has already been redeemed on this browser.'};
+    }
+    saveClaim(parsed.payload.n);
+    setMyCredits(myCredits + parsed.payload.c, true);
+    updateHud();
+    return {ok: true, credits: parsed.payload.c, role: parsed.payload.r, total: myCredits};
+  }
+
+  function showGiftResult(kind, text) {
+    giftResult.hidden = false;
+    giftResult.classList.remove('good', 'bad');
+    giftResult.classList.add(kind);
+    giftResult.textContent = text;
+  }
+
+  async function runGiftRedeem(token) {
+    const res = await redeemGrant(token);
+    if (!res.ok) {
+      showGiftResult('bad', '✕ ' + res.reason);
+      return res;
+    }
+    showGiftResult('good', `✓ ${res.credits.toLocaleString('en-US')} points added — you now have ${res.total.toLocaleString('en-US')}.`);
+    giftInput.value = '';
+    updateHud();
+    return res;
+  }
+
+  function giftTokenFromUrl() {
+    try { return new URLSearchParams(location.search).get('gift') || ''; } catch (e) { return ''; }
+  }
+
+  function clearGiftParam() {
+    try {
+      const url = new URL(location.href);
+      if (!url.searchParams.has('gift')) return;
+      url.searchParams.delete('gift');
+      history.replaceState(null, '', url.pathname + (url.search || '') + (url.hash || ''));
+    } catch (e) {}
+  }
+
+  async function handleGiftLink(token) {
+    if (!token) return;
+    if (!GRANT_KEY) {
+      clearGiftParam();
+      showOverlay('🎁', 'Gift links are off', 'This copy of Bingo 2 has no grant key configured, so it cannot redeem gift codes.\n\nNothing changed in your wallet.', '▶ Play', () => {}, null);
+      return;
+    }
+    const parsed = await verifyGrantToken(token);
+    if (!parsed.ok) {
+      clearGiftParam();
+      showOverlay('🎁', 'Gift code problem', parsed.reason + '\n\nNothing changed in your wallet.', '▶ Play', () => {}, null);
+      return;
+    }
+    if (readClaims().includes(parsed.payload.n)) {
+      clearGiftParam();
+      showOverlay('🎁', 'Gift already used', 'That gift code has already been redeemed on this browser.\n\nNothing changed in your wallet.', '▶ Play', () => {}, null);
+      return;
+    }
+    const amount = parsed.payload.c;
+    const label = amount.toLocaleString('en-US');
+    showOverlay('🎁', 'A gift is waiting', `This link carries ${label} points.\n\nRedeem it once, on this browser.`, `Redeem ${label}`, () => {
+      redeemGrant(token).then(res => {
+        clearGiftParam();
+        if (res.ok) {
+          showOverlay('✅', 'Gift redeemed', `${res.credits.toLocaleString('en-US')} points added — you now have ${res.total.toLocaleString('en-US')}.`, '▶ Play', () => {}, null);
+        } else {
+          showOverlay('🎁', 'Gift not redeemed', res.reason, '▶ Play', () => {}, null);
+        }
+      });
+    }, {label: 'Not now', action: clearGiftParam});
+  }
+
+  const jackpotSeed = () => (roomStake > 0 ? roomStake * JACKPOT_SEED_MULT : 0);
+
+  function myCardsList() {
+    if (mode === 'host') {
+      const me = roomPlayers.get('host');
+      return me && me.cards ? me.cards : [];
+    }
+    if (mode === 'guest') return myCards;
+    return [];
+  }
+
+  function showCall() {
+    if (last) {
+      callLetter.textContent = last.l;
+      callNum.textContent = last.n;
+      callTitle.textContent = 'Ball ' + balls;
+      callNote.textContent = 'Tap ' + last.l + ' ' + last.n + ' on your card.';
+    } else {
+      callLetter.textContent = '★';
+      callNum.textContent = '?';
+      callTitle.textContent = 'Ready to play';
+      callNote.textContent = 'Press start and daub the numbers as they are called.';
+    }
+  }
+
+  function status(text) { statusEl.textContent = text; }
+
+  function addHistory(l, n) {
+    const chip = document.createElement('span');
+    chip.className = 'bingo-chip';
+    const letter = document.createElement('i');
+    letter.textContent = String(l);
+    chip.append(letter, document.createTextNode(String(n)));
+    historyEl.appendChild(chip);
+    historyEl.scrollLeft = historyEl.scrollWidth;
+  }
+
+  function clearHistory() { historyEl.innerHTML = ''; }
+
+  function shake(i) {
+    const el = grid.children[i];
+    if (!el) return;
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 320);
+  }
+
+  function showOverlay(ico, title, text, label, action, alt) {
+    ovIco.textContent = ico;
+    ovTitle.textContent = title;
+    ovText.textContent = text;
+    startBtn.textContent = label;
+    startBtn.disabled = false;
+    overlayAction = action || (() => {});
+    if (alt) {
+      overlayAlt.hidden = false;
+      overlayAlt.textContent = alt.label;
+      overlayAlt.onclick = () => alt.action();
+    } else {
+      overlayAlt.hidden = true;
+      overlayAlt.onclick = null;
+    }
+    overlay.classList.add('show');
+  }
+
+  /* ---------------- solo ---------------- */
+
+  const soloStartText = () => `Win with ${PATTERNS[soloPattern].note}. A new ball drops every 1.2 seconds — tap the numbers on your card to daub them.`;
+
+  function fillSoloPatternSelect() {
+    const sel = $('soloPatternSel');
+    if (!sel) return;
+    sel.innerHTML = '';
+    Object.entries(PATTERNS).forEach(([key, p]) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = p.label;
+      sel.appendChild(opt);
+    });
+    sel.value = soloPattern;
+    sel.addEventListener('change', () => setSoloPattern(sel.value));
+  }
+
+  function renderDaily() {
+    const key = dailyPatternKey();
+    const name = $('dailyName');
+    if (name) name.textContent = patternLabel(key);
+    const opt = $('patternDailyOpt');
+    if (opt) opt.textContent = `Today · ${patternLabel(key)}`;
+    const btn = $('dailyBtn');
+    if (btn) btn.title = `Play today's pattern: ${patternLabel(key)}`;
+  }
+
+  function playDaily() {
+    setSoloPattern(dailyPatternKey());
+    const sel = $('soloPatternSel');
+    if (sel) sel.value = soloPattern;
+    renderDaily();
+  }
+
+  const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const previousDateKey = () => {
+    const now = new Date();
+    return dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  };
+  const readDaily = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(DAILY_KEY) || 'null');
+      if (!raw || typeof raw !== 'object') return {last: '', streak: 0, best: 0, freezes: 0, days: [], snoozed: ''};
+      const days = [];
+      const seen = new Set();
+      (Array.isArray(raw.days) ? raw.days : []).forEach(x => {
+        if (!x || typeof x.d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.d) || seen.has(x.d)) return;
+        seen.add(x.d);
+        days.push({d: x.d, t: x.t === 1 || x.t === 'frozen' ? 1 : 0});
+      });
+      days.sort((a, b) => a.d < b.d ? -1 : 1);
+      return {
+        last: typeof raw.last === 'string' ? raw.last : '',
+        streak: Math.max(0, Math.floor(Number(raw.streak) || 0)),
+        best: Math.max(0, Math.floor(Number(raw.best) || 0)),
+        freezes: Math.min(1, Math.max(0, Math.floor(Number(raw.freezes) || 0))),
+        days: days.slice(-7),
+        snoozed: typeof raw.snoozed === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.snoozed) ? raw.snoozed : ''
+      };
+    } catch (e) { return {last: '', streak: 0, best: 0, freezes: 0, days: [], snoozed: ''}; }
+  };
+  const liveStreak = rec => (rec.last === dateKey() || rec.last === previousDateKey()) ? rec.streak : 0;
+  /* 0 = played today, 1 = yesterday (still live), >1 = the run has lapsed. */
+  const streakAgo = rec => {
+    if (!rec || !rec.streak || !rec.last) return null;
+    const today = dailyOrdinal(dateKey());
+    const last = dailyOrdinal(rec.last);
+    if (!today || !last) return null;
+    return today - last;
+  };
+  const lapsedWhen = gap => gap === 2 ? 'the day before yesterday' : `${gap} days ago`;
+
+  function renderStreak() {
+    const rec = readDaily();
+    const n = liveStreak(rec);
+    streakEl.textContent = String(n);
+    streakChip.hidden = isRoom() || n === 0;
+    streakChip.title = `Consecutive days playing the pattern of the day${rec.best > 0 ? ` · best ${rec.best}` : ''}${rec.freezes > 0 ? ' · ❄ freeze ready' : ''}`;
+    if (freezeTag) freezeTag.hidden = !(rec.freezes > 0 && n > 0);
+    renderDailyHistory();
+    renderFreezeReminder();
+  }
+
+  function snoozeFreezeReminder() {
+    const rec = readDaily();
+    rec.snoozed = dateKey();
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(rec)); } catch (e) {}
+    renderFreezeReminder();
+  }
+
+  /* A banked freeze is only useful before today's daily is played: nudge then. */
+  function renderFreezeReminder() {
+    if (!freezeReminder) return;
+    const rec = readDaily();
+    const live = liveStreak(rec);
+    const show = !isRoom() && rec.freezes > 0 && rec.last !== dateKey() && rec.snoozed !== dateKey();
+    const todayKey = dailyPatternKey();
+    const todayName = patternLabel(todayKey);
+    const selected = soloPattern === todayKey;
+    const text = `❄ Freeze ready — today's ${todayName} is still unplayed. ` +
+      (live > 0 ? `Play it to keep your ${live}-day streak.` : `Play it to start a streak.`);
+    if (freezeReminderText.textContent !== text) freezeReminderText.textContent = text;
+    if (freezePlayBtn) {
+      const label = selected ? '✓ Today selected' : 'Play today';
+      if (freezePlayBtn.textContent !== label) freezePlayBtn.textContent = label;
+      if (freezePlayBtn.disabled !== selected) freezePlayBtn.disabled = selected;
+      freezePlayBtn.title = selected ? "Today's pattern is already selected" : `Switch to ${todayName}`;
+    }
+    if (freezeReminder.hidden === show) freezeReminder.hidden = !show;
+  }
+
+  function renderDailyHistory() {
+    if (!dailyHistoryEl) return;
+    const rec = readDaily();
+    const map = new Map((rec.days || []).map(x => [x.d, x.t]));
+    const now = new Date();
+    dailyHistoryEl.textContent = '';
+    for (let off = -6; off <= 0; off++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+      const key = dateKey(d);
+      const type = map.has(key) ? map.get(key) : -1;
+      const cell = document.createElement('span');
+      cell.className = 'dh-day ' + (type === 1 ? 'frozen' : type === 0 ? 'played' : 'missed');
+      cell.title = `${key} — ${type === 1 ? 'frozen, streak saved' : type === 0 ? 'played' : 'not played'}`;
+      const wd = document.createElement('i');
+      wd.textContent = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][d.getDay()];
+      const mark = document.createElement('b');
+      mark.textContent = type === 1 ? '❄' : String(d.getDate());
+      cell.append(wd, mark);
+      dailyHistoryEl.appendChild(cell);
+    }
+    if (dailyStrip) dailyStrip.hidden = isRoom();
+  }
+
+  /* One freeze is held at most; finishing a blackout tops it back up. */
+  function awardStreakFreeze() {
+    const rec = readDaily();
+    if (rec.freezes >= 1) { renderStreak(); return false; }
+    rec.freezes = 1;
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(rec)); } catch (e) {}
+    renderStreak();
+    status('❄ Streak freeze earned — it covers one missed day.');
+    return true;
+  }
+
+  function logDailyDay(rec, key, type) {
+    const days = (rec.days || []).filter(x => x.d !== key);
+    days.push({d: key, t: type});
+    days.sort((a, b) => a.d < b.d ? -1 : 1);
+    rec.days = days.slice(-7);
+  }
+
+  function markDailyPlayed() {
+    const today = dateKey();
+    const rec = readDaily();
+    if (rec.last === today) { renderStreak(); return; }
+    const gap = streakAgo(rec);
+    let froze = false;
+    if (gap === 1) rec.streak += 1;
+    else if (gap === 2 && rec.freezes > 0) { rec.freezes -= 1; rec.streak += 1; froze = true; }
+    else rec.streak = 1;
+    rec.best = Math.max(rec.best, rec.streak);
+    if (froze) logDailyDay(rec, previousDateKey(), 1);
+    logDailyDay(rec, today, 0);
+    rec.last = today;
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(rec)); } catch (e) {}
+    renderStreak();
+    if (froze) status('❄ Streak freeze used — the run continues.');
+  }
+
+  function setSoloPattern(value) {
+    if (!(value in PATTERNS)) return;
+    if (value === soloPattern && mode === 'solo') { renderDaily(); return; }
+    soloPattern = value;
+    try { localStorage.setItem(SOLO_PATTERN_KEY, value); } catch (e) {}
+    if (mode === 'solo') {
+      soloReset();
+      showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart);
+    }
+    updateHud();
+  }
+
+  function soloReset() {
+    clearInterval(timer);
+    timer = null;
+    running = false;
+    finished = false;
+    balls = 0;
+    last = null;
+    calledSet = new Set();
+    pool = shuffle(Array.from({length: 75}, (_, i) => i + 1));
+    cells = makeCard(patternFreeCenter(soloPattern));
+    pendingDaubs.clear();
+    renderCard();
+    clearHistory();
+    updateHud();
+    showCall();
+    status('Tap each called number on your card.');
+    overlay.classList.remove('show');
+  }
+
+  function soloCallBall() {
+    if (!running) return;
+    if (!pool.length) {
+      soloNoBingo();
+      return;
+    }
+    const n = pool.pop();
+    const l = letterFor(n);
+    last = {l, n};
+    balls++;
+    calledSet.add(n);
+    updateHud();
+    showCall();
+    addHistory(l, n);
+  }
+
+  function soloStart() {
+    if (mode !== 'solo') return;
+    if (running) return;
+    if (finished || !cells.length) soloReset();
+    running = true;
+    finished = false;
+    overlay.classList.remove('show');
+    clearInterval(timer);
+    timer = setInterval(soloCallBall, 1200);
+    soloCallBall();
+  }
+
+  function soloDaub(i) {
+    if (!running) return;
+    const cell = cells[i];
+    if (!cell || cell.free || cell.daubed) return;
+    if (!calledSet.has(cell.n)) {
+      status(`${letterFor(cell.n)} ${cell.n} hasn't been called yet.`);
+      shake(i);
+      return;
+    }
+    cell.daubed = true;
+    refreshCell(i);
+    status(`Daubed ${letterFor(cell.n)} ${cell.n}.`);
+    const hit = findWin(cells, soloPattern);
+    if (hit) soloWin(hit);
+  }
+
+  function soloWin(hit) {
+    running = false;
+    finished = true;
+    clearInterval(timer);
+    timer = null;
+    if (soloPattern === dailyPatternKey()) markDailyPlayed();
+    recordSoloRound(true);
+    const froze = soloPattern === 'blackout' ? awardStreakFreeze() : false;
+    hit.forEach(i => { if (grid.children[i]) grid.children[i].classList.add('win'); });
+    const previous = currentBest();
+    const isBest = previous === null || balls < previous;
+    if (isBest) {
+      bestByPattern[soloPattern] = balls;
+      try { localStorage.setItem(bestKeyFor(soloPattern), String(balls)); } catch (e) {}
+    }
+    updateHud();
+    status(`${patternLabel(soloPattern)} — bingo!`);
+    const text = `${patternLabel(soloPattern)} completed after ${balls} balls.` + (isBest ? ' That is a new best!' : ` Best: ${previous} balls.`) + (froze ? ' ❄ A streak freeze is banked for one missed day.' : '');
+    showOverlay('🎉', 'BINGO!', text, '▶ New card', () => {
+      soloReset();
+      soloStart();
+    });
+  }
+
+  function soloNoBingo() {
+    running = false;
+    finished = true;
+    clearInterval(timer);
+    timer = null;
+    if (soloPattern === dailyPatternKey()) markDailyPlayed();
+    recordSoloRound(false);
+    status(`All 75 balls called — no ${patternLabel(soloPattern).toLowerCase()} this time.`);
+    showOverlay('🫥', 'No bingo this time', 'All 75 balls were called before the pattern filled. Shuffle a new card and try again.', '↻ New card', () => {
+      soloReset();
+      soloStart();
+    });
+  }
+
+  /* ---------------- room UI ---------------- */
+
+  function updateModeUi() {
+    const inRoom = isRoom();
+    document.body.classList.toggle('in-room', inRoom);
+    document.querySelector('.page-bingo2').classList.toggle('in-room', inRoom);
+    roomBar.hidden = !inRoom;
+    bestChip.hidden = inRoom;
+    winsChip.hidden = !inRoom;
+    newBtn.hidden = inRoom;
+    $('soloPatternWrap').hidden = inRoom;
+    $('dailyBtn').hidden = inRoom;
+    roomsBtn.hidden = inRoom;
+    if (inRoom) overlay.classList.remove('show');
+    updateHud();
+    if (inRoom) renderRoomBar();
+    renderStreak();
+  }
+
+  function renderRoomBar() {
+    if (!isRoom()) return;
+    roomCodeEl.textContent = roomCode || '—';
+    roomRoleEl.textContent = mode === 'host' ? 'Host' : 'Guest';
+    roomPlayersEl.innerHTML = '';
+    roster.forEach(p => {
+      const chip = document.createElement('span');
+      chip.className = 'room-player' + (p.id === selfId ? ' me' : '') + (p.connected === false ? ' off' : '');
+      chip.textContent = (p.bot ? '🤖 ' : '') + p.name + (p.wins ? ' ×' + p.wins : '');
+      chip.title = `${p.id === selfId ? 'You' : (p.bot ? 'Smart bot' : 'Player')} · ${p.credits} points`;
+      roomPlayersEl.appendChild(chip);
+    });
+    chatUnreadEl.hidden = unread === 0;
+    chatUnreadEl.textContent = unread > 9 ? '9+' : String(unread);
+  }
+
+  function setTab(tab) {
+    const create = tab !== 'join';
+    $('createTab').classList.toggle('on', create);
+    $('joinTab').classList.toggle('on', !create);
+    $('createTab').setAttribute('aria-selected', String(create));
+    $('joinTab').setAttribute('aria-selected', String(!create));
+    $('createForm').hidden = !create;
+    $('joinForm').hidden = create;
+    clearRoomError();
+  }
+
+  function showSetup(tab) {
+    roomSetup.hidden = false;
+    roomLobby.hidden = true;
+    roomTitle.textContent = 'Play with friends';
+    setTab(tab || 'create');
+    renderWallet();
+  }
+
+  function showLobby() {
+    roomSetup.hidden = true;
+    roomLobby.hidden = false;
+    roomTitle.textContent = 'Room lobby';
+    hostSettings.hidden = mode !== 'host';
+    guestSettings.hidden = mode !== 'guest';
+    renderWallet();
+    renderLobby();
+  }
+
+  function openRoomModal(tab) {
+    if (connecting) return;
+    roomModal.hidden = false;
+    document.body.classList.add('modal-open');
+    if (isRoom()) showLobby();
+    else showSetup(tab || 'create');
+  }
+
+  function closeRoomModal() {
+    roomModal.hidden = true;
+    document.body.classList.remove('modal-open');
+  }
+
+  function setRoomError(msg) {
+    roomError.textContent = msg;
+    roomError.hidden = !msg;
+  }
+
+  function clearRoomError() { setRoomError(''); }
+
+  function renderLobby() {
+    if (!isRoom() || roomLobby.hidden) return;
+    lobbyCode.textContent = roomCode || '—';
+    lobbyCount.textContent = String(roster.length);
+    lobbyPlayers.innerHTML = '';
+
+    roster.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'lobby-player' + (p.id === selfId ? ' me' : '') + (p.connected === false ? ' off' : '');
+      const avatar = document.createElement('span');
+      avatar.className = 'lobby-avatar';
+      avatar.textContent = p.bot ? '🤖' : p.name.slice(0, 1).toUpperCase();
+      const name = document.createElement('span');
+      name.className = 'lobby-name';
+      name.textContent = p.name;
+      const tags = document.createElement('span');
+      tags.className = 'lobby-tags';
+      tags.textContent = [p.id === 'host' ? 'HOST' : '', p.bot ? 'BOT' : '', p.id === selfId ? 'YOU' : '', p.wins ? p.wins + ' WIN' + (p.wins === 1 ? '' : 'S') : '']
+        .filter(Boolean).join(' · ');
+      li.append(avatar, name, tags);
+      lobbyPlayers.appendChild(li);
+    });
+
+    if (mode === 'host') {
+      hostSettings.hidden = false;
+      guestSettings.hidden = true;
+      $('lobbyPattern').value = roomPattern;
+      $('lobbyPace').value = Object.keys(PACES).find(k => PACES[k] === roomPace) || 'classic';
+      $('lobbyBots').value = String(roomBots);
+      $('lobbyTable').value = String(roomStake);
+      $('lobbyCards').value = String(roomCards);
+      startRoomBtn.hidden = false;
+      lobbyWait.hidden = true;
+      startRoomBtn.disabled = roster.length < 2;
+      startRoomBtn.textContent = roster.length < 2 ? 'Add a bot or invite a friend' : '▶ Start game';
+    } else {
+      hostSettings.hidden = true;
+      guestSettings.hidden = false;
+      guestSettings.textContent = `Win: ${patternLabel(roomPattern)} · Pace: ${PACE_LABELS[Object.keys(PACES).find(k => PACES[k] === roomPace)] || 'Classic'} · ${tableLabel()} · ${roomCards} card${roomCards === 1 ? '' : 's'} each`;
+      startRoomBtn.hidden = true;
+      lobbyWait.hidden = false;
+      lobbyWait.textContent = roster.length < 2 ? 'Waiting for more players…' : 'Waiting for the host to start…';
+    }
+
+    renderPotPreview();
+    renderChat();
+  }
+
+  /* ---------------- chat ---------------- */
+
+  function pushChat(msg) {
+    chat.push(msg);
+    if (chat.length > 100) chat.shift();
+    if (isRoom() && !chatOpen && !msg.system && msg.from !== myName) {
+      unread++;
+      renderRoomBar();
+    }
+    renderChat();
+  }
+
+  function renderChat() {
+    [lobbyChat, chatLog].forEach(box => {
+      if (!box) return;
+      box.innerHTML = '';
+      chat.slice(-60).forEach(msg => {
+        const row = document.createElement('div');
+        row.className = 'chat-msg' + (msg.system ? ' system' : '') + (msg.from === myName ? ' self' : '');
+        if (msg.system) {
+          row.textContent = msg.text;
+        } else {
+          const who = document.createElement('b');
+          who.textContent = msg.from + ': ';
+          row.append(who, document.createTextNode(msg.text));
+        }
+        box.appendChild(row);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+  }
+
+  function systemChat(text) {
+    const msg = {system: true, text, at: Date.now()};
+    pushChat(msg);
+    if (mode === 'host') broadcast({t: 'chat', ...msg});
+  }
+
+  function openChat() {
+    chatDrawer.hidden = false;
+    chatOpen = true;
+    unread = 0;
+    renderRoomBar();
+    renderChat();
+    setTimeout(() => $('chatInput').focus(), 40);
+  }
+
+  function closeChat() {
+    chatDrawer.hidden = true;
+    chatOpen = false;
+  }
+
+  function sendChatFrom(input) {
+    const text = cleanText(input.value);
+    if (!text) return;
+    if (Date.now() - lastChatAt < 350) return;
+    lastChatAt = Date.now();
+    input.value = '';
+    if (mode === 'host') {
+      const me = roomPlayers.get('host');
+      if (me) hostChat(me, text);
+    } else if (mode === 'guest') {
+      if (hostConn && hostConn.open) hostConn.send({t: 'chat', text});
+    }
+  }
+
+  function hostChat(player, text) {
+    const msg = {from: player.name, text, at: Date.now()};
+    pushChat(msg);
+    broadcast({t: 'chat', ...msg});
+  }
+
+  /* ---------------- PeerJS plumbing ---------------- */
+
+  function ensurePeerLib() {
+    if (window.Peer) return Promise.resolve();
+    if (peerLibPromise) return peerLibPromise;
+    peerLibPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+      script.async = true;
+      script.onload = () => window.Peer ? resolve() : reject(new Error('The room service loaded but did not start.'));
+      script.onerror = () => reject(new Error('Could not load the room service. Check your connection and try again.'));
+      document.head.appendChild(script);
+    }).catch(err => {
+      peerLibPromise = null;
+      throw err;
+    });
+    return peerLibPromise;
+  }
+
+  function peerErrorText(err) {
+    switch (err && err.type) {
+      case 'unavailable-id': return 'That room code is already in use. Try again.';
+      case 'peer-unavailable': return 'No room found with that code. Check the code and ask the host to keep the room open.';
+      case 'network':
+      case 'server-error':
+      case 'socket-error':
+      case 'socket-closed': return 'Could not reach the room service. Check your connection and try again.';
+      case 'browser-incompatible': return 'This browser does not support the WebRTC features needed for rooms.';
+      case 'webrtc': return 'The connection could not be established. A firewall may be blocking peer-to-peer play.';
+      case 'timeout': return 'The room service took too long to answer. Try again.';
+      default: return 'Room connection failed: ' + ((err && err.message) || 'unknown error');
+    }
+  }
+
+  function randomCode() {
+    let out = '';
+    const bytes = new Uint32Array(5);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
+    for (let i = 0; i < 5; i++) out += CODE_CHARS[(bytes[i] || Math.random() * CODE_CHARS.length) % CODE_CHARS.length];
+    return out;
+  }
+
+  function waitPeerOpen(p) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const to = setTimeout(() => {
+        if (done) return;
+        done = true;
+        reject(Object.assign(new Error('The room service took too long to answer. Check your connection and try again.'), {type: 'timeout'}));
+      }, 15000);
+      p.on('open', () => {
+        if (done) return;
+        done = true;
+        clearTimeout(to);
+        resolve();
+      });
+      p.on('error', err => {
+        if (done) return;
+        done = true;
+        clearTimeout(to);
+        reject(Object.assign(new Error(peerErrorText(err)), {type: err && err.type}));
+      });
+    });
+  }
+
+  function openHostPeer(code) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const p = new Peer('gh-bingo2-' + code);
+      const to = setTimeout(() => {
+        if (done) return;
+        done = true;
+        try { p.destroy(); } catch (e) {}
+        reject(Object.assign(new Error('The room service took too long to answer. Check your connection and try again.'), {type: 'timeout'}));
+      }, 15000);
+      p.on('open', () => {
+        if (done) return;
+        done = true;
+        clearTimeout(to);
+        peer = p;
+        wireHostPeer(p);
+        resolve();
+      });
+      p.on('error', err => {
+        if (done) return;
+        done = true;
+        clearTimeout(to);
+        try { p.destroy(); } catch (e) {}
+        reject(Object.assign(new Error(peerErrorText(err)), {type: err && err.type}));
+      });
+    });
+  }
+
+  function wireHostPeer(p) {
+    p.on('connection', conn => {
+      if (mode !== 'host' || peer !== p) return;
+      if (roomPlayers.size >= MAX_PLAYERS) {
+        try {
+          conn.on('open', () => {
+            conn.send({t: 'busy', reason: 'This room is full.'});
+            setTimeout(() => { try { conn.close(); } catch (e) {} }, 500);
+          });
+        } catch (e) {}
+        return;
+      }
+      conn.on('data', data => {
+        if (!data || typeof data !== 'object') return;
+        if (data.t === 'join') {
+          registerGuest(conn, data);
+          return;
+        }
+        hostOnData(conn, data);
+      });
+      conn.on('close', () => removeGuest(conn.peer));
+      conn.on('error', () => removeGuest(conn.peer));
+    });
+    p.on('disconnected', () => {
+      if (mode === 'host' && peer === p) {
+        try { p.reconnect(); } catch (e) {}
+      }
+    });
+    p.on('close', () => {
+      if (mode === 'host' && peer === p) {
+        peer = null;
+        goSolo('🔌', 'Room closed', 'The connection to the room service dropped. Start a new room when you are ready.', '▶ Play solo');
+      }
+    });
+    p.on('error', err => {
+      if (mode === 'host') status(peerErrorText(err));
+    });
+  }
+
+  function broadcast(msg) {
+    hostConns.forEach(conn => {
+      try {
+        if (conn.open) conn.send(msg);
+      } catch (e) {}
+    });
+  }
+
+  function sendTo(id, msg) {
+    const conn = hostConns.get(id);
+    if (!conn) return;
+    try {
+      if (conn.open) conn.send(msg);
+    } catch (e) {}
+  }
+
+  function tableLabel() {
+    if (roomStake <= 0) return 'Practice · free';
+    return `${roomStake} points/card`;
+  }
+
+  function renderPotPreview() {
+    if (!lobbyPot) return;
+    if (!isRoom()) { lobbyPot.hidden = true; return; }
+    lobbyPot.hidden = false;
+    const seats = roster.length;
+    const ante = roomStake * roomCards;
+    if (roomStake <= 0) {
+      lobbyPot.textContent = 'Practice table — no points change hands.';
+      return;
+    }
+    const entries = seats * ante;
+    const pot = entries - Math.floor(entries * RAKE);
+    lobbyPot.textContent = `${seats} × ${ante} = ${entries} in · pot ${pot} after the table fee · 🎰 ${roomJackpot}`;
+  }
+
+  function publicPlayers() {
+    return [...roomPlayers.values()].map(p => ({
+      id: p.id,
+      name: p.name,
+      wins: p.wins || 0,
+      bot: !!p.bot,
+      connected: p.connected !== false,
+      credits: p.credits || 0,
+      bingos: p.bingos ? p.bingos.length : 0
+    }));
+  }
+
+  function refreshRoster() {
+    roster = publicPlayers();
+    updateHud();
+    renderRoomBar();
+    renderLobby();
+  }
+
+  function broadcastLobby() {
+    roster = publicPlayers();
+    broadcast({t: 'lobby', code: roomCode, pattern: roomPattern, pace: roomPace, players: roster, stake: roomStake, cardsCount: roomCards, pot: roomPot, jackpot: roomJackpot});
+    updateHud();
+    renderRoomBar();
+    if (!roomLobby.hidden) renderLobby();
+  }
+
+  function registerGuest(conn, data) {
+    if (conn._registered) return;
+    if (roomRunning) {
+      try { conn.send({t: 'busy', reason: 'A game is in progress. Ask the host to start a new round.'}); } catch (e) {}
+      setTimeout(() => { try { conn.close(); } catch (e) {} }, 700);
+      return;
+    }
+    if (roomPlayers.size >= MAX_PLAYERS) {
+      try { conn.send({t: 'busy', reason: 'This room is full.'}); } catch (e) {}
+      return;
+    }
+    conn._registered = true;
+    const player = {
+      id: conn.peer,
+      name: cleanName(data && data.name) || 'Guest',
+      cards: null,
+      bingos: [],
+      credits: clampCredits(data && data.credits),
+      wins: 0,
+      bot: false,
+      connected: true,
+      conn
+    };
+    roomPlayers.set(player.id, player);
+    hostConns.set(player.id, conn);
+    try {
+      conn.send({
+        t: 'welcome',
+        id: player.id,
+        code: roomCode,
+        pattern: roomPattern,
+        pace: roomPace,
+        players: publicPlayers(),
+        chat: chat.slice(-40),
+        running: false,
+        hidden: document.hidden,
+        stake: roomStake,
+        cardsCount: roomCards,
+        pot: roomPot,
+        jackpot: roomJackpot,
+        you: player.credits
+      });
+    } catch (e) {}
+    systemChat(player.name + ' joined the room.');
+    broadcastLobby();
+  }
+
+  function removeGuest(id) {
+    const p = roomPlayers.get(id);
+    if (!p) return;
+    roomPlayers.delete(id);
+    hostConns.delete(id);
+    if (mode === 'host') {
+      systemChat(p.name + ' left the room.');
+      roster = publicPlayers();
+      refreshRoster();
+      broadcastLobby();
+    }
+  }
+
+  function hostOnData(conn, data) {
+    const p = roomPlayers.get(conn.peer);
+    if (!p) return;
+    if (data.t === 'chat') {
+      const text = cleanText(data.text);
+      if (text) hostChat(p, text);
+      return;
+    }
+    if (data.t === 'daub' && roomRunning) {
+      if (Number(data.round) !== roomRound) return;
+      const n = Number(data.n);
+      const ci = Math.max(0, Math.min(roomCards - 1, Number(data.c) || 0));
+      const card = p.cards && p.cards[ci];
+      const idx = card ? card.findIndex(c => c.n === n) : -1;
+      if (idx < 0 || card[idx].free || card[idx].daubed) return;
+      if (!roomCalled.has(n)) {
+        sendTo(p.id, {t: 'denied', c: ci, n, reason: 'That ball has not been called yet.'});
+        return;
+      }
+      hostDaub(p, ci, idx);
+    }
+  }
+
+  function hostDaub(p, ci, idx) {
+    if (!roomRunning || !p.cards || !p.cards[ci]) return;
+    if (roomPlayers.get(p.id) !== p) return;
+    const card = p.cards[ci];
+    const cell = card[idx];
+    if (!cell || cell.free || cell.daubed) return;
+    cell.daubed = true;
+    if (p.id === 'host' && ci === myCardIndex) {
+      refreshCell(idx);
+      status(`Daubed ${letterFor(cell.n)} ${cell.n}.`);
+    }
+    broadcast({t: 'daub', player: p.id, c: ci, n: cell.n});
+    const win = findWin(card, roomPattern);
+    if (!win) return;
+    p.bingos = p.bingos || [];
+    p.bingos.push({card: ci, calls: roomBalls, cells: win});
+    broadcast({t: 'bingo', player: p.id, name: p.name, c: ci, calls: roomBalls});
+    if (p.id === 'host' && ci === myCardIndex) {
+      win.forEach(i => { if (grid.children[i]) grid.children[i].classList.add('win'); });
+    }
+    const who = p.id === selfId ? 'You' : p.name;
+    status(`${who} bingo${p.bingos.length > 1 ? ' ×' + p.bingos.length : ''} on ball ${roomBalls}.`);
+    checkRoundComplete();
+  }
+
+  function checkRoundComplete() {
+    if (!roomRunning) return;
+    const seats = roomSeatIds.map(id => roomPlayers.get(id)).filter(Boolean);
+    if (!seats.length) return;
+    if (seats.every(p => p.bingos && p.bingos.length)) endRoomRound();
+  }
+
+  function botReact(bot, n) {
+    if (!bot.cards) return;
+    const tryDaub = (ci, idx, chance) => {
+      const card = bot.cards[ci];
+      const cell = card && card[idx];
+      if (!cell || cell.free || cell.daubed) return;
+      if (Math.random() > chance) return;
+      const delay = 260 + Math.random() * 720;
+      setTimeout(() => {
+        if (!roomRunning) return;
+        const current = bot.cards[ci] && bot.cards[ci][idx];
+        if (current && !current.daubed) hostDaub(bot, ci, idx);
+      }, delay);
+    };
+    bot.cards.forEach((card, ci) => {
+      const fresh = card.findIndex(c => c.n === n);
+      if (fresh >= 0) tryDaub(ci, fresh, 0.94);
+    });
+    roomCalled.forEach(called => {
+      if (called === n) return;
+      bot.cards.forEach((card, ci) => {
+        const idx = card.findIndex(c => c.n === called);
+        if (idx >= 0) tryDaub(ci, idx, 0.28);
+      });
+    });
+  }
+
+  function callRoomBall() {
+    if (!roomRunning || mode !== 'host') return;
+    if (roomBalls >= roomBudget || !roomPool.length) {
+      endRoomRound();
+      return;
+    }
+    const n = roomPool.pop();
+    roomCalled.add(n);
+    roomBalls++;
+    roomLast = {l: letterFor(n), n};
+    balls = roomBalls;
+    last = roomLast;
+    updateHud();
+    showCall();
+    addHistory(last.l, last.n);
+    broadcast({t: 'call', n, balls: roomBalls, last: last.l});
+    roomSeatIds.map(id => roomPlayers.get(id)).forEach(p => {
+      if (p && p.bot && p.cards) botReact(p, n);
+    });
+    checkRoundComplete();
+  }
+
+  function endRoomRound() {
+    if (!roomRunning) return;
+    roomRunning = false;
+    roomFinished = true;
+    clearInterval(roomTimer);
+    roomTimer = null;
+    running = false;
+    finished = true;
+
+    const seats = roomSeatIds.map(id => roomPlayers.get(id)).filter(Boolean);
+    const ranked = seats
+      .filter(p => p.bingos && p.bingos.length)
+      .sort((a, b) => {
+        if (b.bingos.length !== a.bingos.length) return b.bingos.length - a.bingos.length;
+        return Math.min(...a.bingos.map(x => x.calls)) - Math.min(...b.bingos.map(x => x.calls));
+      });
+
+    const settledPot = roomPot;
+    const payouts = [];
+    let paid = 0;
+    if (settledPot > 0) {
+      ranked.slice(0, PAYOUT_SPLIT.length).forEach((p, i) => {
+        const amount = Math.floor(settledPot * PAYOUT_SPLIT[i]);
+        if (amount <= 0) return;
+        paid += amount;
+        if (!p.bot) {
+          p.credits += amount;
+          if (p.id === selfId) setMyCredits(p.credits);
+        }
+        payouts.push({id: p.id, name: p.name, place: i + 1, amount, bingos: p.bingos.length, bot: !!p.bot});
+      });
+    }
+
+    let jackpotWin = null;
+    const trigger = patternSpec(roomPattern).jackpot || 0;
+    if (roomStake > 0 && roomJackpot > 0) {
+      let best = null;
+      seats.forEach(p => (p.bingos || []).forEach(b => {
+        if (b.calls > trigger) return;
+        if (!best || b.calls < best.calls) best = {p, calls: b.calls};
+      }));
+      if (best) {
+        jackpotWin = {id: best.p.id, name: best.p.name, calls: best.calls, amount: roomJackpot, bot: !!best.p.bot};
+        if (!best.p.bot) {
+          best.p.credits += roomJackpot;
+          if (best.p.id === selfId) setMyCredits(best.p.credits);
+        }
+        roomJackpot = jackpotSeed();
+      }
+    }
+
+    if (settledPot > 0) roomJackpot += settledPot - paid;
+
+    if (roomSeatIds.includes(selfId)) {
+      let earned = 0;
+      payouts.forEach(x => { if (x.id === selfId) earned += x.amount; });
+      if (jackpotWin && jackpotWin.id === selfId) earned += jackpotWin.amount;
+      recordRoomRound(!!(ranked[0] && ranked[0].id === selfId), earned, roomStake * roomCards);
+      if (roomPattern === dailyPatternKey()) markDailyPlayed();
+      if (roomPattern === 'blackout' && ranked[0] && ranked[0].id === selfId) awardStreakFreeze();
+    }
+
+    const winner = ranked[0] || null;
+    if (winner) winner.wins = (winner.wins || 0) + 1;
+    roomPot = 0;
+    roster = publicPlayers();
+    updateHud();
+    renderRoomBar();
+
+    broadcast({
+      t: 'end',
+      winnerId: winner ? winner.id : null,
+      winnerName: winner ? winner.name : '',
+      balls: roomBalls,
+      players: roster,
+      pattern: roomPattern,
+      pot: settledPot,
+      rake: roomRake,
+      payouts,
+      jackpotWin,
+      jackpot: roomJackpot,
+      stake: roomStake,
+      cardsCount: roomCards,
+      seatIds: roomSeatIds
+    });
+
+    const lines = [];
+    if (roomStake > 0) {
+      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}`).join('   '));
+      else lines.push('No bingo this round — the pot rolls into the jackpot.');
+      if (jackpotWin) lines.push(`🎰 ${jackpotWin.name} hit the jackpot in ${jackpotWin.calls} calls: +${jackpotWin.amount}`);
+      lines.push(`Pot ${settledPot} · table fee ${roomRake} · jackpot ${roomJackpot}`);
+    } else {
+      lines.push('Practice table — no points change hands.');
+    }
+    const title = winner ? winner.name + ' wins the round!' : 'No bingo this round';
+    if (mode === 'host') {
+      showOverlay(winner ? '🎉' : '🫥', title, lines.join('\n'), '▶ Next round', hostStartRound, {label: 'Leave room', action: leaveRoom});
+    }
+  }
+
+  function hostStartRound() {
+    if (mode !== 'host' || roomRunning) return;
+    if (roomPlayers.size < 2) {
+      showLobby();
+      openRoomModal();
+      clearRoomError();
+      setRoomError('Add a smart bot or invite a friend before starting.');
+      return;
+    }
+    const hostPlayer = roomPlayers.get('host');
+    const ante = roomStake * roomCards;
+    roomPlayers.forEach(p => {
+      if (p.bot && (p.credits || 0) < ante) p.credits = BOT_CREDITS;
+    });
+    const seats = [...roomPlayers.values()].filter(p => p.connected !== false && (p.credits || 0) >= ante);
+    if (ante > 0 && !seats.includes(hostPlayer)) {
+      showLobby();
+      openRoomModal();
+      clearRoomError();
+      setRoomError(`This table costs ${ante} points a round. Pick a cheaper table or fewer cards.`);
+      return;
+    }
+    if (seats.length < 2) {
+      showLobby();
+      openRoomModal();
+      clearRoomError();
+      setRoomError('Nobody else can cover the card cost. Lower the table or add a bot.');
+      return;
+    }
+    seats.forEach(p => { p.credits -= ante; });
+    setMyCredits(hostPlayer.credits);
+    const entries = seats.length * ante;
+    roomRake = Math.floor(entries * RAKE);
+    roomPot = entries - roomRake;
+    if (roomStake > 0) {
+      roomJackpot += Math.floor(roomRake / 2) + Math.floor(entries * JACKPOT_CONTRIB);
+    }
+    roomSeatIds = seats.map(p => p.id);
+    roomPlayers.forEach(p => {
+      if (!seats.includes(p) && p.conn) {
+        sendTo(p.id, {t: 'sitout', reason: `Not enough points for the ${ante}-point card cost.`});
+      }
+    });
+    roomRound++;
+    roomPool = shuffle(Array.from({length: 75}, (_, i) => i + 1));
+    roomCalled = new Set();
+    roomBalls = 0;
+    roomLast = null;
+    roomRunning = true;
+    roomFinished = false;
+    roomBudget = patternBudget(roomPattern);
+    seats.forEach(p => {
+      p.cards = Array.from({length: roomCards}, () => makeCard(patternFreeCenter(roomPattern)));
+      p.bingos = [];
+    });
+    myCardIndex = 0;
+    cells = hostPlayer.cards[0];
+    calledSet = roomCalled;
+    balls = 0;
+    last = null;
+    running = true;
+    finished = false;
+    pendingDaubs.clear();
+    renderCard();
+    clearHistory();
+    updateHud();
+    showCall();
+    status(`Win with ${PATTERNS[roomPattern].note}.${roomStake ? ` Card cost ${ante} · pot ${roomPot}.` : ' Practice table — no points at stake.'}`);
+    closeRoomModal();
+    closeChat();
+    overlay.classList.remove('show');
+    startBtn.disabled = false;
+    roster = publicPlayers();
+    updateModeUi();
+    renderRoomBar();
+    seats.forEach(p => {
+      if (!p.conn) return;
+      sendTo(p.id, {
+        t: 'start',
+        cards: p.cards.map(cardNumbers),
+        pattern: roomPattern,
+        pace: roomPace,
+        players: roster,
+        called: [],
+        balls: 0,
+        last: null,
+        round: roomRound,
+        stake: roomStake,
+        cardsCount: roomCards,
+        pot: roomPot,
+        jackpot: roomJackpot,
+        you: p.credits
+      });
+    });
+    clearInterval(roomTimer);
+    roomTimer = setInterval(callRoomBall, roomPace);
+    callRoomBall();
+  }
+
+  /* ---------------- host create ---------------- */
+
+  function setBotCount(count) {
+    roomBots = Math.max(0, Math.min(3, count));
+    const bots = [...roomPlayers.values()].filter(p => p.bot);
+    bots.slice(roomBots).forEach(p => roomPlayers.delete(p.id));
+    let have = [...roomPlayers.values()].filter(p => p.bot).length;
+    for (const name of BOT_NAMES) {
+      if (have >= roomBots) break;
+      if ([...roomPlayers.values()].some(p => p.bot && p.name === name)) continue;
+      roomPlayers.set('bot-' + name.toLowerCase(), {
+        id: 'bot-' + name.toLowerCase(),
+        name,
+        cards: null,
+        bingos: [],
+        credits: BOT_CREDITS,
+        wins: 0,
+        bot: true,
+        connected: true,
+        conn: null
+      });
+      have++;
+    }
+  }
+
+  async function createRoom() {
+    if (connecting || isRoom()) return;
+    const name = cleanName($('hostName').value) || 'Host';
+    localStorage.setItem(NAME_KEY, name);
+    roomPattern = resolvePatternSelection($('patternSel').value);
+    roomPace = paceFor($('paceSel').value);
+    roomBots = Math.max(0, Math.min(3, Number($('botSel').value) || 0));
+    roomStake = Math.max(0, Number($('tableSel').value) || 0);
+    roomCards = Math.max(1, Math.min(3, Number($('cardsSel').value) || 1));
+    roomPot = 0;
+    roomJackpot = jackpotSeed();
+    clearRoomError();
+    connecting = true;
+    $('createBtn').disabled = true;
+    $('createBtn').textContent = 'Creating…';
+    try {
+      await ensurePeerLib();
+      let opened = false;
+      let lastErr = null;
+      for (let attempt = 0; attempt < 5 && !opened; attempt++) {
+        const code = randomCode();
+        try {
+          await openHostPeer(code);
+          roomCode = code;
+          opened = true;
+        } catch (err) {
+          lastErr = err;
+          if (err && err.type === 'unavailable-id') continue;
+          throw err;
+        }
+      }
+      if (!opened) throw lastErr || new Error('Could not reserve a room code. Try again.');
+      mode = 'host';
+      selfId = 'host';
+      myName = name;
+      roomPlayers = new Map();
+      roomPlayers.set('host', {
+        id: 'host',
+        name,
+        cards: null,
+        bingos: [],
+        credits: myCredits,
+        wins: 0,
+        bot: false,
+        connected: true,
+        conn: null
+      });
+      setBotCount(roomBots);
+      roomRunning = false;
+      roomFinished = false;
+      roomTimer = null;
+      roomCalled = new Set();
+      chat = [];
+      unread = 0;
+      roster = publicPlayers();
+      updateModeUi();
+      showLobby();
+      pushChat({system: true, text: 'Room ' + roomCode + ' is open. Share the code or invite link.'});
+      broadcastLobby();
+      clearInterval(hostPingTimer);
+      hostPingTimer = setInterval(() => broadcast({t: 'ping'}), 3000);
+    } catch (err) {
+      setRoomError(err && err.message ? err.message : 'Could not create the room.');
+      try { if (peer) peer.destroy(); } catch (e) {}
+      peer = null;
+      mode = 'solo';
+    } finally {
+      connecting = false;
+      $('createBtn').disabled = false;
+      $('createBtn').textContent = 'Create room';
+    }
+  }
+
+  /* ---------------- guest join ---------------- */
+
+  async function joinRoom() {
+    if (connecting || isRoom()) return;
+    const name = cleanName($('joinName').value) || 'Guest';
+    const code = String($('joinCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+    if (code.length !== 5) {
+      setRoomError('Enter the 5-character room code from the host.');
+      $('joinCode').focus();
+      return;
+    }
+    localStorage.setItem(NAME_KEY, name);
+    clearRoomError();
+    connecting = true;
+    $('joinBtn').disabled = true;
+    $('joinBtn').textContent = 'Joining…';
+    let p = null;
+    try {
+      await ensurePeerLib();
+      p = new Peer();
+      await waitPeerOpen(p);
+      peer = p;
+      const conn = p.connect('gh-bingo2-' + code, {reliable: true, metadata: {name}});
+      hostConn = conn;
+      conn.on('data', guestOnData);
+      conn.on('close', () => {
+        if (hostConn === conn && mode === 'guest' && !leaving) hostGone();
+      });
+      conn.on('error', err => {
+        if (hostConn === conn && mode === 'guest') status(peerErrorText(err));
+      });
+      p.on('error', err => {
+        if (mode === 'guest') status(peerErrorText(err));
+        else if (connecting) setRoomError(peerErrorText(err));
+      });
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const to = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error('The host did not answer. Check the code and try again.'));
+        }, 15000);
+        conn.on('open', () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(to);
+          try { conn.send({t: 'join', name, credits: myCredits}); } catch (e) {}
+          resolve();
+        });
+        conn.on('error', err => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(to);
+          reject(new Error(peerErrorText(err)));
+        });
+        p.on('error', err => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(to);
+          reject(new Error(peerErrorText(err)));
+        });
+      });
+      joinWait = setTimeout(() => {
+        if (mode !== 'guest') {
+          failJoin('The host did not send a room welcome. Ask them to try again.');
+        }
+      }, 12000);
+    } catch (err) {
+      failJoin(err && err.message ? err.message : 'Could not join the room.');
+    } finally {
+      connecting = false;
+      $('joinBtn').disabled = false;
+      $('joinBtn').textContent = 'Join room';
+    }
+  }
+
+  function failJoin(message) {
+    clearTimeout(joinWait);
+    joinWait = null;
+    if (mode === 'guest') return;
+    try { if (hostConn) hostConn.close(); } catch (e) {}
+    try { if (peer) peer.destroy(); } catch (e) {}
+    hostConn = null;
+    peer = null;
+    roomCode = '';
+    showSetup('join');
+    roomModal.hidden = false;
+    document.body.classList.add('modal-open');
+    setRoomError(message);
+  }
+
+  function guestOnData(data) {
+    if (!data || typeof data !== 'object') return;
+    lastHostSeen = Date.now();
+    switch (data.t) {
+      case 'welcome': {
+        clearTimeout(joinWait);
+        joinWait = null;
+        mode = 'guest';
+        selfId = data.id;
+        roomCode = data.code;
+        roomPattern = data.pattern in PATTERNS ? data.pattern : 'line';
+        roomPace = Number(data.pace) || PACES.classic;
+        roomStake = Number(data.stake) || 0;
+        roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
+        roomPot = Number(data.pot) || 0;
+        roomJackpot = Number(data.jackpot) || 0;
+        setMyCredits(data.you);
+        roster = Array.isArray(data.players) ? data.players : [];
+        chat = Array.isArray(data.chat) ? data.chat.slice() : [];
+        unread = 0;
+        lastHostSeen = Date.now();
+        hostHidden = !!data.hidden;
+        clearInterval(guestPingTimer);
+        guestPingTimer = setInterval(() => {
+          const limit = hostHidden ? 75000 : 9000;
+          if (mode === 'guest' && Date.now() - lastHostSeen > limit) hostGone();
+        }, 2500);
+        updateModeUi();
+        showLobby();
+        renderChat();
+        break;
+      }
+      case 'lobby': {
+        if (mode !== 'guest') return;
+        roomCode = data.code || roomCode;
+        roomPattern = data.pattern in PATTERNS ? data.pattern : roomPattern;
+        roomPace = Number(data.pace) || roomPace;
+        roomStake = Number(data.stake) || 0;
+        roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
+        roomPot = Number(data.pot) || 0;
+        roomJackpot = Number(data.jackpot) || 0;
+        roster = Array.isArray(data.players) ? data.players : roster;
+        const meNow = roster.find(x => x.id === selfId);
+        if (meNow) setMyCredits(meNow.credits);
+        updateHud();
+        renderRoomBar();
+        renderLobby();
+        break;
+      }
+      case 'start':
+        guestStart(data);
+        break;
+      case 'call': {
+        if (!running) return;
+        const n = Number(data.n);
+        if (!n) return;
+        calledSet.add(n);
+        balls = Number(data.balls) || balls + 1;
+        last = {l: data.last || letterFor(n), n};
+        updateHud();
+        showCall();
+        addHistory(last.l, n);
+        const has = cells.some(c => c.n === n);
+        status(has ? `Ball ${last.l} ${last.n} — tap it on your card.` : `Ball ${last.l} ${last.n} — no match on your card.`);
+        break;
+      }
+      case 'daub': {
+        const n = Number(data.n);
+        if (!n) return;
+        const ci = Math.max(0, Math.min(roomCards - 1, Number(data.c) || 0));
+        if (data.player === selfId) {
+          const card = myCards[ci];
+          if (card) {
+            const idx = card.findIndex(c => c.n === n);
+            if (idx >= 0) {
+              card[idx].daubed = true;
+              card[idx].pending = false;
+              pendingDaubs.delete(ci + ':' + n);
+              if (ci === myCardIndex) {
+                refreshCell(idx);
+                status(`Daubed ${letterFor(n)} ${n}.`);
+              }
+              renderCardTabs();
+            }
+          }
+        } else {
+          const p = roster.find(x => x.id === data.player);
+          if (p && !p.bot) status(`${p.name} daubed ${letterFor(n)} ${n}.`);
+        }
+        break;
+      }
+      case 'bingo': {
+        const who = data.player === selfId ? 'You' : String(data.name || 'Someone');
+        status(`${who} bingo on ball ${data.calls}.`);
+        renderCardTabs();
+        break;
+      }
+      case 'sitout':
+        status(data.reason || 'You are sitting this round out.');
+        showLobby();
+        openRoomModal();
+        break;
+      case 'denied': {
+        const n = Number(data.n);
+        const ci = Math.max(0, Math.min(roomCards - 1, Number(data.c) || 0));
+        pendingDaubs.delete(ci + ':' + n);
+        if (ci === myCardIndex) {
+          const idx = cells.findIndex(c => c.n === n);
+          if (idx >= 0) {
+            cells[idx].pending = false;
+            refreshCell(idx);
+            shake(idx);
+          }
+        }
+        status(data.reason || 'That daub was not accepted.');
+        break;
+      }
+      case 'end':
+        guestEnd(data);
+        break;
+      case 'visibility':
+        hostHidden = !!data.hidden;
+        break;
+      case 'chat':
+        if (data.system) pushChat({system: true, text: String(data.text || '')});
+        else if (data.from) pushChat({from: String(data.from), text: String(data.text || ''), at: data.at || Date.now()});
+        break;
+      case 'busy':
+        failJoin(data.reason || 'That room is not accepting players right now.');
+        break;
+      case 'closed':
+        if (mode === 'guest') hostGone();
+        break;
+    }
+  }
+
+  function guestStart(data) {
+    mode = 'guest';
+    roomPattern = data.pattern in PATTERNS ? data.pattern : 'line';
+    roomPace = Number(data.pace) || PACES.classic;
+    myRound = Number(data.round) || 0;
+    roster = Array.isArray(data.players) ? data.players : roster;
+    roomStake = Number(data.stake) || 0;
+    roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
+    roomPot = Number(data.pot) || 0;
+    roomJackpot = Number(data.jackpot) || 0;
+    setMyCredits(data.you);
+    myCards = (Array.isArray(data.cards) ? data.cards : []).map(cardFromNumbers);
+    if (!myCards.length) myCards = [makeCard(patternFreeCenter(roomPattern))];
+    myCardIndex = 0;
+    cells = myCards[0];
+    calledSet = new Set(Array.isArray(data.called) ? data.called.map(Number) : []);
+    balls = Number(data.balls) || 0;
+    last = null;
+    clearTimeout(joinWait);
+    joinWait = null;
+    running = true;
+    finished = false;
+    pendingDaubs.clear();
+    renderCard();
+    clearHistory();
+    calledSet.forEach(n => addHistory(letterFor(n), n));
+    updateHud();
+    showCall();
+    status(`Win with ${PATTERNS[roomPattern].note}. Tap called numbers.`);
+    closeRoomModal();
+    closeChat();
+    overlay.classList.remove('show');
+    startBtn.disabled = false;
+    updateModeUi();
+    renderRoomBar();
+  }
+
+  function guestEnd(data) {
+    running = false;
+    finished = true;
+    clearInterval(timer);
+    timer = null;
+    roster = Array.isArray(data.players) ? data.players : roster;
+    roomStake = Number(data.stake) || roomStake;
+    roomPot = 0;
+    roomJackpot = Number(data.jackpot) || roomJackpot;
+    const me = roster.find(x => x.id === selfId);
+    if (me) setMyCredits(me.credits);
+    const seatIds = Array.isArray(data.seatIds) ? data.seatIds : [];
+    if (!seatIds.length || seatIds.includes(selfId)) {
+      let earned = 0;
+      (Array.isArray(data.payouts) ? data.payouts : []).forEach(x => { if (x.id === selfId) earned += Number(x.amount) || 0; });
+      if (data.jackpotWin && data.jackpotWin.id === selfId) earned += Number(data.jackpotWin.amount) || 0;
+      const paidIn = (Number(data.stake) || roomStake) * (Number(data.cardsCount) || roomCards || 1);
+      recordRoomRound(data.winnerId === selfId, earned, paidIn);
+      if (data.pattern === 'blackout' && data.winnerId === selfId) awardStreakFreeze();
+      if (roomPattern === dailyPatternKey()) markDailyPlayed();
+    }
+    updateHud();
+    renderRoomBar();
+    const winner = data.winnerId ? roster.find(p => p.id === data.winnerId) : null;
+    const win = findWin(cells, roomPattern);
+    if (win && data.winnerId === selfId) {
+      win.forEach(i => { if (grid.children[i]) grid.children[i].classList.add('win'); });
+    }
+    const lines = [];
+    if ((Number(data.stake) || 0) > 0) {
+      const payouts = Array.isArray(data.payouts) ? data.payouts : [];
+      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}`).join('   '));
+      else lines.push('No bingo this round — the pot rolls into the jackpot.');
+      if (data.jackpotWin) lines.push(`🎰 ${data.jackpotWin.name} hit the jackpot in ${data.jackpotWin.calls} calls: +${data.jackpotWin.amount}`);
+      lines.push(`Pot ${data.pot || 0} · bonus ${data.jackpot || 0} · your points ${myCredits} · rooms ${myStats.room.wins} won / ${myStats.room.earned} earned`);
+    } else {
+      lines.push('Practice table — no points at stake.');
+    }
+    const title = data.winnerId ? (data.winnerId === selfId ? 'BINGO!' : (winner ? winner.name + ' wins!' : 'Round over')) : 'No winner this round';
+    showOverlay(data.winnerId === selfId ? '🎉' : '🎱', title, lines.join('\n'), 'Waiting for host…', () => {}, {label: 'Leave room', action: leaveRoom});
+    startBtn.disabled = true;
+    status(data.winnerId ? title : 'Round over — waiting for the host.');
+  }
+
+  function hostGone() {
+    if (mode !== 'guest' || leaving) return;
+    goSolo('🔌', 'Room closed', 'The host left or their connection dropped. Start a room of your own, or play solo.', '▶ Play solo');
+  }
+
+  /* ---------------- teardown ---------------- */
+
+  function teardownRoom(notify) {
+    clearInterval(roomTimer);
+    roomTimer = null;
+    clearInterval(hostPingTimer);
+    hostPingTimer = null;
+    clearInterval(guestPingTimer);
+    guestPingTimer = null;
+    clearTimeout(joinWait);
+    joinWait = null;
+    if (notify && mode === 'host') {
+      try { broadcast({t: 'closed'}); } catch (e) {}
+    }
+    hostConns.forEach(conn => { try { conn.close(); } catch (e) {} });
+    hostConns.clear();
+    if (hostConn) { try { hostConn.close(); } catch (e) {} }
+    hostConn = null;
+    if (peer) { try { peer.destroy(); } catch (e) {} }
+    peer = null;
+    roomPlayers = new Map();
+    roster = [];
+    chat = [];
+    unread = 0;
+    roomCode = '';
+    roomRunning = false;
+    roomFinished = false;
+    roomCalled = new Set();
+    roomBalls = 0;
+    roomLast = null;
+    roomPool = [];
+    roomSeatIds = [];
+    roomPot = 0;
+    roomJackpot = 0;
+    roomRake = 0;
+    myCards = [];
+    myCardIndex = 0;
+    if (cardTabsEl) { cardTabsEl.hidden = true; cardTabsEl.innerHTML = ''; }
+    running = false;
+    finished = false;
+    pendingDaubs.clear();
+    closeChat();
+    closeRoomModal();
+  }
+
+  function goSolo(ico, title, text, buttonLabel) {
+    mode = 'solo';
+    teardownRoom(false);
+    selfId = 'host';
+    updateModeUi();
+    soloReset();
+    showOverlay(ico, title, text, buttonLabel || '▶ Start calling', soloStart, {label: '🌐 Play with friends', action: () => openRoomModal('create')});
+  }
+
+  function leaveRoom() {
+    if (!isRoom()) return;
+    leaving = true;
+    const wasHost = mode === 'host';
+    mode = 'solo';
+    teardownRoom(wasHost);
+    leaving = false;
+    updateModeUi();
+    soloReset();
+    showOverlay('👋', 'You left the room', 'Your card is gone and the room chat has closed. Start another room or play a solo card.', '▶ Play solo', soloStart, {label: '🌐 Play with friends', action: () => openRoomModal('create')});
+  }
+
+  /* ---------------- click routing ---------------- */
+
+  function handleCell(i) {
+    if (mode === 'solo') {
+      soloDaub(i);
+      return;
+    }
+    if (mode === 'host') {
+      if (!roomRunning) return;
+      const cell = cells[i];
+      if (!cell || cell.free || cell.daubed) return;
+      if (!roomCalled.has(cell.n)) {
+        status(`${letterFor(cell.n)} ${cell.n} hasn't been called yet.`);
+        shake(i);
+        return;
+      }
+      hostDaub(roomPlayers.get('host'), myCardIndex, i);
+      return;
+    }
+    if (mode === 'guest') {
+      if (!running || !hostConn || !hostConn.open) return;
+      const cell = cells[i];
+      if (!cell || cell.free || cell.daubed || cell.pending) return;
+      if (!calledSet.has(cell.n)) {
+        status(`${letterFor(cell.n)} ${cell.n} hasn't been called yet.`);
+        shake(i);
+        return;
+      }
+      const key = myCardIndex + ':' + cell.n;
+      if (pendingDaubs.has(key)) return;
+      pendingDaubs.add(key);
+      cell.pending = true;
+      refreshCell(i);
+      try {
+        hostConn.send({t: 'daub', c: myCardIndex, n: cell.n, round: myRound});
+      } catch (e) {
+        pendingDaubs.delete(key);
+        cell.pending = false;
+        refreshCell(i);
+        return;
+      }
+      status(`Sending ${letterFor(cell.n)} ${cell.n} to the host…`);
+      setTimeout(() => {
+        if (!pendingDaubs.has(key)) return;
+        pendingDaubs.delete(key);
+        cell.pending = false;
+        refreshCell(i);
+        status('The host did not confirm that daub. Try again.');
+      }, 2600);
+    }
+  }
+
+  /* ---------------- events ---------------- */
+
+  startBtn.addEventListener('click', () => {
+    if (startBtn.disabled) return;
+    overlay.classList.remove('show');
+    overlayAction();
+  });
+
+  $('dailyBtn').addEventListener('click', playDaily);
+  $('freezePlayBtn').addEventListener('click', playDaily);
+  $('freezeSnoozeBtn').addEventListener('click', snoozeFreezeReminder);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { renderDaily(); renderStreak(); }
+  });
+
+  newBtn.addEventListener('click', () => {
+    if (mode !== 'solo') return;
+    soloReset();
+    soloStart();
+  });
+
+  roomsBtn.addEventListener('click', () => openRoomModal('create'));
+
+  $('createTab').addEventListener('click', () => setTab('create'));
+  $('joinTab').addEventListener('click', () => setTab('join'));
+  $('roomClose').addEventListener('click', closeRoomModal);
+  roomModal.addEventListener('click', e => {
+    if (e.target === roomModal) closeRoomModal();
+  });
+
+  $('createForm').addEventListener('submit', e => {
+    e.preventDefault();
+    createRoom();
+  });
+  $('joinForm').addEventListener('submit', e => {
+    e.preventDefault();
+    joinRoom();
+  });
+
+  function copyInvite() {
+    const base = location.protocol === 'file:'
+      ? location.href.split('?')[0]
+      : location.origin + location.pathname;
+    const link = base + '?room=' + roomCode;
+    const done = () => {
+      const btn = $('copyLinkBtn');
+      if (btn) {
+        btn.textContent = '✓ Invite copied';
+        setTimeout(() => { btn.textContent = '🔗 Copy invite link'; }, 1800);
+      }
+      status('Invite link copied — send it to your friends.');
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(done).catch(() => window.prompt('Copy this invite link:', link));
+    } else {
+      window.prompt('Copy this invite link:', link);
+    }
+  }
+
+  roomCodeEl.addEventListener('click', copyInvite);
+  $('copyLinkBtn').addEventListener('click', copyInvite);
+
+  startRoomBtn.addEventListener('click', hostStartRound);
+  $('lobbyLeave').addEventListener('click', leaveRoom);
+  leaveBtn.addEventListener('click', leaveRoom);
+
+  walletCopyBtn.addEventListener('click', copyWalletCode);
+  walletRestoreBtn.addEventListener('click', openWalletRestore);
+  walletCheckBtn.addEventListener('click', checkWalletCode);
+  walletApplyBtn.addEventListener('click', applyWalletCode);
+  walletCancelBtn.addEventListener('click', () => {
+    pendingRestore = null;
+    walletRestore.hidden = true;
+    walletPreview.hidden = true;
+    walletConfirm.hidden = true;
+  });
+  walletCodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      checkWalletCode();
+    }
+  });
+
+  giftRedeemBtn.addEventListener('click', () => {
+    if (!giftInput.value.trim()) { showGiftResult('bad', 'Paste a gift code first.'); return; }
+    runGiftRedeem(giftInput.value).catch(e => showGiftResult('bad', 'Redeem failed: ' + (e.message || e)));
+  });
+  giftInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      giftRedeemBtn.click();
+    }
+  });
+
+  chatBtn.addEventListener('click', () => {
+    if (chatOpen) closeChat();
+    else openChat();
+  });
+  $('chatClose').addEventListener('click', closeChat);
+  chatDrawer.addEventListener('click', e => {
+    if (e.target === chatDrawer) closeChat();
+  });
+
+  $('chatForm').addEventListener('submit', e => {
+    e.preventDefault();
+    sendChatFrom($('chatInput'));
+  });
+  $('lobbyChatForm').addEventListener('submit', e => {
+    e.preventDefault();
+    sendChatFrom($('lobbyChatInput'));
+  });
+
+  $('lobbyPattern').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    roomPattern = resolvePatternSelection(e.target.value);
+    broadcastLobby();
+    renderLobby();
+  });
+  $('lobbyPace').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    roomPace = paceFor(e.target.value);
+    broadcastLobby();
+    renderLobby();
+  });
+  $('lobbyBots').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    setBotCount(Number(e.target.value) || 0);
+    broadcastLobby();
+    renderLobby();
+  });
+  $('lobbyTable').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    roomStake = Math.max(0, Number(e.target.value) || 0);
+    roomJackpot = jackpotSeed();
+    roomPot = 0;
+    broadcastLobby();
+    renderLobby();
+    updateHud();
+  });
+  $('lobbyCards').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    roomCards = Math.max(1, Math.min(3, Number(e.target.value) || 1));
+    broadcastLobby();
+    renderLobby();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'select' || tag === 'textarea';
+    if (e.key === 'Escape') {
+      if (!roomModal.hidden) closeRoomModal();
+      else if (chatOpen) closeChat();
+      return;
+    }
+    if (typing) return;
+    if (e.key.toLowerCase() === 'n' && mode === 'solo') {
+      e.preventDefault();
+      soloReset();
+      soloStart();
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (mode === 'host') broadcast({t: 'visibility', hidden: document.hidden});
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (mode === 'host') {
+      try { broadcast({t: 'closed'}); } catch (e) {}
+    }
+    try { if (peer) peer.destroy(); } catch (e) {}
+  });
+
+  /* ---------------- boot ---------------- */
+
+  const savedName = cleanName(localStorage.getItem(NAME_KEY) || '');
+  if (savedName) {
+    $('hostName').value = savedName;
+    $('joinName').value = savedName;
+  }
+
+  const storedWallet = readWallet();
+  if (storedWallet) {
+    myCredits = storedWallet.points;
+    myStats = {
+      solo: {games: storedWallet.solo.games, wins: storedWallet.solo.wins},
+      room: {games: storedWallet.room.games, wins: storedWallet.room.wins, earned: storedWallet.room.earned, staked: storedWallet.room.staked}
+    };
+  }
+  persistWallet();
+
+  loadBests();
+  renderDaily();
+  renderStreak();
+  fillSoloPatternSelect();
+  soloReset();
+  updateModeUi();
+  renderWallet();
+  renderRecord();
+  showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart, {label: '🌐 Play with friends', action: () => openRoomModal('create')});
+
+  const giftToken = giftTokenFromUrl();
+  if (giftToken) handleGiftLink(giftToken);
+
+  const inviteRoom = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);    if (inviteRoom.length === 5) {
+    $('joinCode').value = inviteRoom;
+    $('joinHint').textContent = 'You were invited to room ' + inviteRoom + '. Enter your name to join.';
+    openRoomModal('join');
+  }
+})();
+</script>
+
+</body>
+</html>
