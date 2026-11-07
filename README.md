@@ -64,3 +64,5 @@ A ready-to-share copy of the playable files ships as `downloads/bingo-2.zip` (un
 - Source: <https://github.com/jiffythorn/bingo-2> · MIT License.
 
 Bingo 2 was extracted from the larger [Game Hub](https://github.com/jiffythorn/game-hub) arcade; this repository is its standalone home.
+
+<!-- temporary: exercises the stale-ZIP gate -->
