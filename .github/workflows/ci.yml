@@ -1,0 +1,43 @@
+name: Tests and download ZIP
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Rebuild download ZIP
+        run: python3 scripts/build-zip.py
+
+      - name: Commit the ZIP if it changed
+        if: github.event_name != 'pull_request'
+        run: |
+          if git diff --quiet -- downloads/bingo-2.zip; then
+            echo "ZIP already matches the sources."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/bingo-2.zip
+          git commit -m "Rebuild download ZIP"
+          git push

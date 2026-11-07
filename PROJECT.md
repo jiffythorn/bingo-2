@@ -23,7 +23,7 @@ friends and bots. No build step, no server, no accounts.
 | Live rooms, bots, chat | Done, but host-authoritative and PeerJS-dependent |
 | Server-side leaderboard / anti-abuse | **Not started** |
 | Automated tests in the repo | Done — `npm test` (JSDOM) |
-| CI (tests, ZIP rebuild) | **Not started** |
+| CI (tests, ZIP rebuild) | Done — GitHub Actions on every push |
 
 ## What's done
 
@@ -74,6 +74,8 @@ friends and bots. No build step, no server, no accounts.
 - `downloads/bingo-2.zip` ships the playable files (page, both stylesheets,
   terms, README, this doc, licence) with deterministic timestamps.
 - GitHub Pages serves `main` at the URL above; HTTPS enforced.
+- `.github/workflows/ci.yml` runs `npm test`, rebuilds the ZIP with
+  `scripts/build-zip.py`, and commits it back only when the bytes changed.
 - `terms.html` documents the points-only model.
 
 ## How it works
@@ -154,28 +156,28 @@ recorded in `gh.bingo2.claims` so a code cannot be reused on the same browser.
 
 The suites live in `tests/`, use `jsdom` as the only dev dependency, and boot
 the real `index.html` (the gift suite patches in a throwaway public key; the room
-suite fakes PeerJS). Nothing runs on push yet — see the CI item below.
+suite fakes PeerJS). GitHub Actions runs the suites and the ZIP build on every
+push and pull request, and commits a refreshed `downloads/bingo-2.zip` when the
+sources changed.
 
 ## Not done / known gaps
 
-1. **No CI.** `npm test` exists and is stable, but nothing runs it on push or
-   pull request, so regressions still depend on someone running it locally.
-2. **No server-side state.** Points, records and streaks are client-side and
+1. **No server-side state.** Points, records and streaks are client-side and
    editable by the player. Restore codes are not secrets and can be copied or
    replayed, so standings are not trustworthy for prizes.
-3. **Rooms depend on a public CDN and PeerJS cloud broker.** If unpkg or the
+2. **Rooms depend on a public CDN and PeerJS cloud broker.** If unpkg or the
    broker is unavailable, rooms fail; the offline ZIP cannot do rooms either.
-4. **Host is trusted.** A modified host client can mis-settle pots; guests
+3. **Host is trusted.** A modified host client can mis-settle pots; guests
    cannot verify fairness.
-5. **No reconnect or state recovery** in rooms; a refresh or network blip ends
+4. **No reconnect or state recovery** in rooms; a refresh or network blip ends
    a player's seat.
-6. **Accessibility is partial.** Cards and chips are buttons, but overlays and
+5. **Accessibility is partial.** Cards and chips are buttons, but overlays and
    modals need focus trapping and restoration, and the board has no keyboard
    daub shortcut beyond tabbing.
-7. **Mobile polish is unverified.** The HUD strip, the two-button reminder and
+6. **Mobile polish is unverified.** The HUD strip, the two-button reminder and
    the room modal's five-column wallet row have not been checked at phone width.
-8. **No privacy or analytics story**, and no 404 page or custom domain.
-9. **Gift-code operations** (key rotation, issuance tooling, revocation) live
+7. **No privacy or analytics story**, and no 404 page or custom domain.
+8. **Gift-code operations** (key rotation, issuance tooling, revocation) live
    outside the repo and are undocumented here.
 
 ## Roadmap
@@ -184,8 +186,6 @@ suite fakes PeerJS). Nothing runs on push yet — see the CI item below.
 
 | Task | Why |
 | --- | --- |
-| GitHub Action: run tests on PR/push | Prevents silent regressions |
-| GitHub Action: rebuild `downloads/bingo-2.zip` when page/CSS/docs change | Stops the download drifting from the page |
 | Vendor PeerJS or add a clear load-failure message | Removes a silent CDN failure mode |
 
 ### Next
@@ -229,24 +229,13 @@ npm test
 # play locally
 python3 -m http.server 8080   # then open http://localhost:8080/
 
-# rebuild the downloadable ZIP (same deterministic layout)
-python3 - <<'ZIPEOF'
-import zipfile
-from pathlib import Path
-files = ['index.html', 'bingo-2.css', 'style.css', 'terms.html',
-         'README.md', 'PROJECT.md', 'LICENSE']
-out = Path('downloads/bingo-2.zip'); out.parent.mkdir(exist_ok=True)
-with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-    for name in files:
-        info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
-        info.compress_type = zipfile.ZIP_DEFLATED
-        info.external_attr = 0o644 << 16
-        z.writestr(info, Path(name).read_bytes())
-ZIPEOF
+# rebuild the downloadable ZIP (deterministic)
+python3 scripts/build-zip.py
 ```
 
-Push to `main`; GitHub Pages redeploys automatically. The ZIP is a committed
-snapshot, so rebuild it in the same commit as any page change.
+Push to `main`; GitHub Pages redeploys automatically. CI refreshes the committed
+ZIP whenever the page, stylesheets or docs change, and running the script
+locally produces the same bytes.
 
 ## Open questions
 

@@ -38,7 +38,8 @@ npm test
 
 Five JSDOM suites boot `index.html` and cover patterns, wallet/restore codes,
 the solo and daily loop, gift tokens and the room flow with a fake PeerJS
-broker. See `tests/README.md`.
+broker. See `tests/README.md`. GitHub Actions runs the same suites on every
+push and refreshes `downloads/bingo-2.zip` when the page or docs change.
 
 ## Files
 
@@ -50,6 +51,8 @@ broker. See `tests/README.md`.
 | `terms.html` | Points-only notice and terms |
 | `BINGO-2-ECONOMY.md` | Design notes on the points economy and why nothing has cash value |
 | `tests/` | JSDOM suites, run with `npm test` |
+| `scripts/build-zip.py` | Rebuilds `downloads/bingo-2.zip` deterministically |
+| `.github/workflows/ci.yml` | Tests plus reproducible ZIP refresh on push |
 
 A ready-to-share copy of the playable files ships as `downloads/bingo-2.zip` (unzip it and open `index.html`).
 
