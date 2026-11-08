@@ -302,7 +302,8 @@ small doses, corrosive if the bot is good. Rules:
 - Tune the bot tiers to lose slightly more than they win at low stakes
   (`Casual` ≈ 0.8 of a human's daub accuracy) and cap the leak: if a session's
   net bot contribution exceeds ~200 credits, bots stop winning (their claims
-  get deprioritised in the payout ranking).- Label it in the lobby: "Bots pay in but never collect; their share goes to the
+  get deprioritised in the payout ranking).
+- Label it in the lobby: "Bots pay in but never collect; their share goes to the
   jackpot." Legibility is the fairness mechanism (§2.5).
 - **Solo bots are a second faucet, and a small one.** A solo card can race up to
   three bots, and beating them pays 5, 10 or 15 points by skill (a trio pays
