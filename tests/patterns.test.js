@@ -1,15 +1,19 @@
-const fs = require('fs');
-const { JSDOM } = require('jsdom');
-let html = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+const { GAME, bootGame, createHarness } = require('./helpers');
+let html = GAME;
 const inject = '  window.__logic = {PATTERNS, findWin, makeCard, cardFromNumbers, LINES, patternFreeCenter, patternBudget};\n})();\n</script>';
 html = html.replace('})();\n</script>', inject);
 if (!html.includes('__logic')) { console.log('FAIL could not inject logic hook'); process.exit(1); }
 
-const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.com/bingo-2.html', pretendToBeVisual: true });
+const suite = createHarness();
+const {check, $} = suite;
+
+/* Pure-logic suite: one boot of a patched page, with no seeded storage. */
+const dom = bootGame({
+  html,
+  onError: message => { suite.failures++; console.log('PAGE ERROR: ' + message); }
+});
 const w = dom.window;
 const L = w.__logic;
-let failures = 0;
-const check = (n, c, x) => { if (c) console.log('PASS ' + n); else { failures++; console.log('FAIL ' + n + (x !== undefined ? ' :: ' + x : '')); } };
 
 check('logic hook exposed', !!L);
 
@@ -68,5 +72,4 @@ check('any line: a row wins', (L.findWin(paint(blank, [5, 6, 7, 8, 9]), 'line') 
 check('any line: two scattered squares do not', L.findWin(paint(blank, [0, 24]), 'line') === null);
 check('unknown pattern falls back to any line', L.findWin(paint(blank, [5, 6, 7, 8, 9]), 'nope').length === 5);
 
-console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL PATTERN CHECKS PASSED');
-process.exit(failures ? 1 : 0);
+process.exit(suite.report('PATTERN'));

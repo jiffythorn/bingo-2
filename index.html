@@ -31,6 +31,35 @@
       <label class="solo-pattern" id="soloPatternWrap">Pattern
         <select id="soloPatternSel" aria-label="Solo winning pattern"></select>
       </label>
+      <label class="solo-pattern" id="soloBotsWrap">Opponents
+        <select id="soloBotSel" aria-label="Solo opponents">
+          <option value="0">None</option>
+          <option value="1">1 bot</option>
+          <option value="2">2 bots</option>
+          <option value="3">3 bots</option>
+        </select>
+      </label>
+      <label class="solo-pattern" id="soloSkillSel0Wrap" hidden>Rex
+        <select id="soloSkillSel0" aria-label="Rex bot skill">
+          <option value="casual">Casual</option>
+          <option value="normal">Normal</option>
+          <option value="sharp">Sharp</option>
+        </select>
+      </label>
+      <label class="solo-pattern" id="soloSkillSel1Wrap" hidden>Nova
+        <select id="soloSkillSel1" aria-label="Nova bot skill">
+          <option value="casual">Casual</option>
+          <option value="normal">Normal</option>
+          <option value="sharp">Sharp</option>
+        </select>
+      </label>
+      <label class="solo-pattern" id="soloSkillSel2Wrap" hidden>Pip
+        <select id="soloSkillSel2" aria-label="Pip bot skill">
+          <option value="casual">Casual</option>
+          <option value="normal">Normal</option>
+          <option value="sharp">Sharp</option>
+        </select>
+      </label>
       <label class="solo-pattern" id="soloSpeedWrap">Level
         <select id="soloSpeedSel" aria-label="Solo draw speed">
           <option value="relaxed">1 · Relaxed</option>
@@ -58,6 +87,7 @@
       <ol class="hud-ladder-days" id="hudLadderDays" aria-label="Seven-day daily login rewards"></ol>
     </div>
     <div class="chip" id="potChip" hidden>Pot <b id="pot">0</b></div>
+    <div class="chip" id="botCapChip" hidden title="Solo bot winnings today">🤖 <b id="botCapWon">0</b><span class="bot-cap-max">/<span id="botCapMax">100</span></span></div>
     <div class="chip" id="bestChip">Best <b id="best">—</b></div>
     <div class="chip" id="streakChip" hidden>🔥 Streak <b id="streak">0</b><span id="freezeTag" hidden title="Streak freeze ready — covers one missed day">❄</span></div>
     <div class="chip" id="winsChip" hidden>Wins <b id="wins">0</b></div>
@@ -94,6 +124,8 @@
           <span id="callNote">Press start and daub the numbers as they are called.</span>
         </div>
       </div>
+
+      <div class="solo-bots" id="soloBots" hidden aria-label="Opponents at the table"></div>
 
       <div class="bingo-cards" id="cardTabs" hidden></div>
 
@@ -208,6 +240,27 @@
               <option value="3">3 bots</option>
             </select>
           </label>
+          <label class="room-field" id="botSkillSel0Wrap">Rex skill
+            <select id="botSkillSel0">
+              <option value="casual">Casual · misses calls</option>
+              <option value="normal" selected>Normal</option>
+              <option value="sharp">Sharp · chases every call</option>
+            </select>
+          </label>
+          <label class="room-field" id="botSkillSel1Wrap" hidden>Nova skill
+            <select id="botSkillSel1">
+              <option value="casual">Casual · misses calls</option>
+              <option value="normal" selected>Normal</option>
+              <option value="sharp">Sharp · chases every call</option>
+            </select>
+          </label>
+          <label class="room-field" id="botSkillSel2Wrap" hidden>Pip skill
+            <select id="botSkillSel2">
+              <option value="casual">Casual · misses calls</option>
+              <option value="normal" selected>Normal</option>
+              <option value="sharp">Sharp · chases every call</option>
+            </select>
+          </label>
           <label class="room-field">Card hints
             <select id="hintsSel">
               <option value="0" selected>Off · find them yourself</option>
@@ -283,6 +336,27 @@
                 <option value="3">3</option>
               </select>
             </label>
+            <label class="room-field" id="lobbyBotSkill0Wrap">Rex
+              <select id="lobbyBotSkill0">
+                <option value="casual">Casual</option>
+                <option value="normal">Normal</option>
+                <option value="sharp">Sharp</option>
+              </select>
+            </label>
+            <label class="room-field" id="lobbyBotSkill1Wrap" hidden>Nova
+              <select id="lobbyBotSkill1">
+                <option value="casual">Casual</option>
+                <option value="normal">Normal</option>
+                <option value="sharp">Sharp</option>
+              </select>
+            </label>
+            <label class="room-field" id="lobbyBotSkill2Wrap" hidden>Pip
+              <select id="lobbyBotSkill2">
+                <option value="casual">Casual</option>
+                <option value="normal">Normal</option>
+                <option value="sharp">Sharp</option>
+              </select>
+            </label>
             <label class="room-field">Hints
               <select id="lobbyHints">
                 <option value="0">Off · find them</option>
@@ -356,6 +430,7 @@
           <div><span>Games</span><b id="recSoloGames">0</b></div>
           <div><span>Wins</span><b id="recSoloWins">0</b></div>
           <div><span>Win rate</span><b id="recSoloRate">—</b></div>
+          <div title="Solo bot points won today, against the 100-point daily cap"><span>Bot wins</span><b id="recBotWon">0/100</b></div>
         </div>
         <div class="record-section">
           <span class="record-label">Rooms</span>
@@ -371,7 +446,7 @@
       <p class="wallet-code" id="walletCodeOut" hidden></p>
       <div class="wallet-restore" id="walletRestore" hidden>
         <label class="room-field">Restore code
-          <input id="walletCodeInput" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="GH2-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX">
+          <input id="walletCodeInput" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="GH2-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX">
         </label>
         <div class="wallet-confirm-row">
           <button class="btn btn-ghost btn-sm" id="walletCheck" type="button">Check code</button>
@@ -543,6 +618,43 @@
   })();
   const SOLO_HINTS_KEY = 'gh.bingo2.soloHints';
   let soloHints = localStorage.getItem(SOLO_HINTS_KEY) === '1';
+  /* Solo opponents: 0-3 labelled bots racing the same pattern. One is the
+     default so a solo card always has someone to beat; the player can set it
+     to None. Each bot beaten pays a small prize (solo has no card cost). */
+  const SOLO_BOTS_KEY = 'gh.bingo2.soloBots';
+  let soloBots = (() => {
+    const saved = parseInt(localStorage.getItem(SOLO_BOTS_KEY), 10);
+    return Number.isFinite(saved) ? Math.min(3, Math.max(0, saved)) : 1;
+  })();
+  /* How well solo bots daub: chance on a fresh call, chance on a catch-up for
+     a number they missed, and the pause before the daub lands. */
+  const SOLO_SKILL_KEY = 'gh.bingo2.soloSkill';
+  const BOT_SKILLS = {
+    casual: {label: 'Casual', fresh: 0.74, catch: 0.14, delay: [420, 1100], prize: 5},
+    normal: {label: 'Normal', fresh: 0.94, catch: 0.28, delay: [260, 980], prize: 10},
+    sharp: {label: 'Sharp', fresh: 1, catch: 0.55, delay: [150, 620], prize: 15}
+  };
+  const SOLO_SKILLS_KEY = 'gh.bingo2.soloSkills';
+  let soloSkills = (() => {
+    const fallback = BOT_NAMES.map(() => 'normal');
+    try {
+      const raw = JSON.parse(localStorage.getItem(SOLO_SKILLS_KEY) || 'null');
+      if (Array.isArray(raw)) return fallback.map((v, i) => (raw[i] in BOT_SKILLS ? raw[i] : v));
+    } catch (e) {}
+    const legacy = localStorage.getItem(SOLO_SKILL_KEY);
+    return legacy in BOT_SKILLS ? fallback.map(() => legacy) : fallback;
+  })();
+  const ROOM_BOT_SKILL_KEY = 'gh.bingo2.roomBotSkill'; // legacy single value
+  const ROOM_BOT_SKILLS_KEY = 'gh.bingo2.roomBotSkills';
+  let roomBotSkills = (() => {
+    const fallback = BOT_NAMES.map(() => 'normal');
+    try {
+      const raw = JSON.parse(localStorage.getItem(ROOM_BOT_SKILLS_KEY) || 'null');
+      if (Array.isArray(raw)) return fallback.map((v, i) => (raw[i] in BOT_SKILLS ? raw[i] : v));
+    } catch (e) {}
+    const legacy = localStorage.getItem(ROOM_BOT_SKILL_KEY);
+    return legacy in BOT_SKILLS ? fallback.map(() => legacy) : fallback;
+  })();
   const SOLO_UNLOCK_KEY = 'gh.bingo2.unlockedLevels';
   const bestByPattern = {};
   const bestKeyFor = p => BEST_KEY + '.' + p;
@@ -563,6 +675,8 @@
 
   let cells = [], pool = [], calledSet = new Set();
   let balls = 0, running = false, finished = false, timer = null, last = null;
+  let soloOpponents = [], soloRound = 0;
+  const soloBotTimers = new Set();
   let overlayAction = () => {};
 
   let mode = 'solo';
@@ -757,6 +871,23 @@
       : 'Find called numbers yourself — turn on to mark them cyan';
   }
 
+  function renderBotCap() {
+    const chip = $('botCapChip');
+    if (!chip) return;
+    const won = soloWonToday();
+    const show = mode === 'solo' && (soloBots > 0 || won > 0);
+    chip.hidden = !show;
+    if (!show) return;
+    const amount = $('botCapWon');
+    if (amount) amount.textContent = String(won);
+    const max = $('botCapMax');
+    if (max) max.textContent = String(SOLO_WIN_CAP);
+    chip.classList.toggle('full', won >= SOLO_WIN_CAP);
+    chip.title = won >= SOLO_WIN_CAP
+      ? `Solo bot winnings today: ${won} of ${SOLO_WIN_CAP} points — today's cap is spent`
+      : `Solo bot winnings today: ${won} of ${SOLO_WIN_CAP} points`;
+  }
+
   function updateHud() {
     ballsEl.textContent = balls;
     lastEl.textContent = last ? last.l + ' ' + last.n : '—';
@@ -770,6 +901,7 @@
     if (!jackpotEl.hidden) jackpotAmtEl.textContent = String(roomJackpot);
     renderFreezeReminder();
     renderDailyBonus();
+    renderBotCap();
   }
 
   function clampCredits(v) {
@@ -788,7 +920,7 @@
   const CLAIMS_KEY = 'gh.bingo2.claims';
 
   const WALLET_KEY = 'gh.bingo2.wallet';
-  const WALLET_VERSION = 5;
+  const WALLET_VERSION = 6;
   const WALLET_PAD = [0x5a, 0xc3, 0x27, 0x91, 0x6e, 0xb4, 0x3d, 0x88, 0xf1];
   const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const CRC_TABLE = (() => {
@@ -862,6 +994,9 @@
     const count = v => Math.max(0, Math.min(65535, Math.floor(Number(v) || 0)));
     const earned = clampCredits(room.earned);
     const staked = clampCredits(room.staked);
+    const tally = soloWonRecord();
+    const tallyDay = dailyOrdinal(tally.d);
+    const tallyWon = tallyDay ? Math.min(255, tally.won) : 0;
     const payload = [
       WALLET_VERSION,
       (amount >>> 24) & 255, (amount >>> 16) & 255, (amount >>> 8) & 255, amount & 255,
@@ -873,7 +1008,9 @@
       (count(room.wins) >>> 8) & 255, count(room.wins) & 255,
       (ord >>> 8) & 255, ord & 255,
       streak, best,
-      Math.min(1, Math.max(0, Math.floor(Number(day.freezes) || 0)))
+      Math.min(1, Math.max(0, Math.floor(Number(day.freezes) || 0))),
+      (tallyDay >>> 8) & 255, tallyDay & 255,
+      tallyWon, 0, 0
     ];
     const sum = crc32(payload);
     const bytes = payload.concat([(sum >>> 24) & 255, (sum >>> 16) & 255, (sum >>> 8) & 255, sum & 255]);
@@ -886,7 +1023,7 @@
     const body = raw.slice(0, 3) === 'GH2' ? raw.slice(3) : raw;
     const text = body.replace(/0/g, 'O').replace(/1/g, 'I');
     const bytes = fromBase32(text);
-    if (!bytes || ![9, 17, 22, 25, 30].includes(bytes.length)) {
+    if (!bytes || ![9, 17, 22, 25, 30, 35].includes(bytes.length)) {
       return {ok: false, error: 'That is not a Bingo 2 restore code.'};
     }
     const mixed = bytes.map((b, i) => b ^ WALLET_PAD[i % WALLET_PAD.length]);
@@ -930,7 +1067,7 @@
         legacy: false
       };
     }
-    if (payload.length !== 26 || payload[0] !== WALLET_VERSION) {
+    if (!((payload.length === 26 && payload[0] === 5) || (payload.length === 31 && payload[0] === WALLET_VERSION))) {
       return {ok: false, error: 'That code is from a different version of the game.'};
     }
     const points = ((payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4]) >>> 0;
@@ -944,12 +1081,17 @@
     const dayStreak = payload[23];
     const dayBest = payload[24];
     const dayFreeze = payload[25] ? 1 : 0;
+    const tallyDay = payload.length === 31 ? ordinalDaily((payload[26] << 8) | payload[27]) : '';
+    const soloWon = tallyDay
+      ? {day: tallyDay, won: Math.max(0, Math.min(SOLO_WIN_CAP, payload[28]))}
+      : null;
     return {
       ok: true,
       points: clampCredits(points),
       solo: {games: soloGames, wins: soloWins},
       room: {games: roomGames, wins: roomWins, earned: clampCredits(earned), staked: clampCredits(staked)},
       daily: {last: ordinalDaily(dayNo), streak: dayStreak, best: Math.max(dayBest, dayStreak), freezes: dayFreeze},
+      soloWon,
       legacy: false
     };
   }
@@ -967,7 +1109,7 @@
           room: {games: count(raw.games), wins: count(raw.wins), earned: clampCredits(raw.earned), staked: clampCredits(raw.staked)}
         };
       }
-      if (raw.v !== 4 && raw.v !== WALLET_VERSION) return null;
+      if (raw.v !== 4 && raw.v !== 5 && raw.v !== WALLET_VERSION) return null;
       const solo = raw.solo && typeof raw.solo === 'object' ? raw.solo : {};
       const room = raw.room && typeof raw.room === 'object' ? raw.room : {};
       return {
@@ -1017,6 +1159,12 @@
     recSoloGamesEl.textContent = String(solo.games);
     recSoloWinsEl.textContent = String(solo.wins);
     recSoloRateEl.textContent = solo.games ? Math.round((solo.wins / solo.games) * 100) + '%' : '—';
+    const botWonEl = $('recBotWon');
+    if (botWonEl) {
+      const botWon = soloWonToday();
+      botWonEl.textContent = `${botWon}/${SOLO_WIN_CAP}`;
+      botWonEl.title = `Solo bot points won today: ${botWon} of ${SOLO_WIN_CAP}`;
+    }
     recRoomGamesEl.textContent = String(room.games);
     recRoomWinsEl.textContent = String(room.wins);
     recRoomEarnedEl.textContent = room.earned.toLocaleString('en-US');
@@ -1241,7 +1389,11 @@
         : ` It carries a ${day.streak}-day daily streak${day.best > day.streak ? ` (best ${day.best})` : ''}.`)
       : '';
     const freezeText = day.freezes ? ' It also carries a streak freeze.' : '';
-    walletPreview.textContent = `This code restores ${parsed.points.toLocaleString('en-US')} points.${record}${streakText}${freezeText} Replace your current ${myCredits.toLocaleString('en-US')} points?`;
+    const tally = parsed.soloWon;
+    const tallyText = tally && tally.day === dateKey() && tally.won > 0
+      ? ` It also carries ${tally.won} solo bot points won today, against the ${SOLO_WIN_CAP}-point cap.`
+      : '';
+    walletPreview.textContent = `This code restores ${parsed.points.toLocaleString('en-US')} points.${record}${streakText}${freezeText}${tallyText} Replace your current ${myCredits.toLocaleString('en-US')} points?`;
     walletConfirm.hidden = false;
   }
 
@@ -1260,6 +1412,18 @@
     myStats.room.staked = Math.max(myStats.room.staked, room.staked || 0);
     persistWallet();
     renderRecord();
+    let tallyLine = '';
+    const tally = restored.soloWon;
+    if (tally && tally.day === dateKey()) {
+      const localTally = soloWonRecord();
+      const keep = localTally.d === tally.day ? Math.max(localTally.won, tally.won) : tally.won;
+      const kept = Math.min(SOLO_WIN_CAP, keep);
+      try {
+        localStorage.setItem(SOLO_WON_KEY, JSON.stringify({d: tally.day, won: kept}));
+      } catch (e) {}
+      renderRecord();
+      if (kept > 0) tallyLine = ` Today's solo bot tally stands at ${kept} of ${SOLO_WIN_CAP} points.`;
+    }
     const incoming = restored.daily || {last: '', streak: 0, best: 0, freezes: 0};
     const local = readDaily();
     const best = Math.max(local.best, local.streak, incoming.best, incoming.streak);
@@ -1289,8 +1453,8 @@
     walletPreview.classList.remove('bad');
     walletPreview.classList.add('good');
     walletPreview.textContent = lapsed
-      ? `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings. That code's daily streak ended ${merged.last}, so only your best of ${merged.best} was kept.${freezeKept ? ' Its streak freeze came across too.' : ''}`
-      : `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings, and your daily streak.${freezeKept ? ' Your streak freeze came across too.' : ''}`;
+      ? `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings. That code's daily streak ended ${merged.last}, so only your best of ${merged.best} was kept.${freezeKept ? ' Its streak freeze came across too.' : ''}${tallyLine}`
+      : `Points restored — ${myCredits.toLocaleString('en-US')} points, solo and room standings, and your daily streak.${freezeKept ? ' Your streak freeze came across too.' : ''}${tallyLine}`;
     walletCodeOut.hidden = true;
     updateHud();
   }
@@ -1508,7 +1672,99 @@
 
   /* ---------------- solo ---------------- */
 
-  const soloStartText = () => `Win with ${PATTERNS[soloPattern].note}. A new ball drops every ${(SOLO_LEVELS[soloLevel] / 1000).toFixed(1)} seconds — tap the numbers on your card to daub them.`;
+  const soloBotPrize = () => soloSkills.slice(0, soloBots)
+    .reduce((sum, s) => sum + (BOT_SKILLS[s] || BOT_SKILLS.normal).prize, 0);
+
+  /* Bot wins are a faucet, so a small daily cap keeps a sharp trio from
+     out-earning the paid room tables. The tally resets with the local day. */
+  const SOLO_WON_KEY = 'gh.bingo2.soloWon';
+  const SOLO_WIN_CAP = 100;
+  const soloWonRecord = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SOLO_WON_KEY) || 'null');
+      if (raw && /^\d{4}-\d{2}-\d{2}$/.test(String(raw.d))) {
+        return {d: raw.d, won: Math.max(0, Math.min(SOLO_WIN_CAP, Math.floor(Number(raw.won) || 0)))};
+      }
+    } catch (e) {}
+    return {d: '', won: 0};
+  };
+  const soloWonToday = () => {
+    const rec = soloWonRecord();
+    return rec.d === dateKey() ? rec.won : 0;
+  };
+  const soloBotAllowance = () => Math.max(0, SOLO_WIN_CAP - soloWonToday());
+  function awardSoloBotPrize(offered) {
+    const amount = Math.min(Math.max(0, offered), soloBotAllowance());
+    if (amount <= 0) return 0;
+    try {
+      localStorage.setItem(SOLO_WON_KEY, JSON.stringify({d: dateKey(), won: soloWonToday() + amount}));
+    } catch (e) {}
+    setMyCredits(myCredits + amount);
+    return amount;
+  }
+
+  const soloStartText = () => {
+    const base = `Win with ${PATTERNS[soloPattern].note}. A new ball drops every ${(SOLO_LEVELS[soloLevel] / 1000).toFixed(1)} seconds — tap the numbers on your card to daub them.`;
+    if (!soloBots) return base + ' No opponents this time — a free practice card.';
+    const named = soloSkills.slice(0, soloBots)
+      .map((s, i) => `${BOT_NAMES[i]} (${BOT_SKILLS[s].label.toLowerCase()})`);
+    const who = soloBots === 1 ? `the ${BOT_SKILLS[soloSkills[0]].label.toLowerCase()} bot` : named.join(', ');
+    const offered = soloBotPrize();
+    const left = Math.min(offered, soloBotAllowance());
+    if (left <= 0) return base + ` Today's ${SOLO_WIN_CAP}-point solo bot cap is used up — a win pays nothing until tomorrow.`;
+    if (left < offered) return base + ` Beat ${who} to earn up to ${left} points (daily cap ${SOLO_WIN_CAP}).`;
+    return base + ` Beat ${who} to earn ${offered} points.`;
+  };
+
+  /* How many squares each bot still needs for the current pattern. Any-line
+     uses the shortest open line, matching findWin. */
+  function soloBotLeft(card) {
+    const spec = patternSpec(soloPattern);
+    if (spec.cells) return spec.cells.filter(i => !card[i].daubed).length;
+    return LINES.reduce((best, line) => Math.min(best, line.filter(i => !card[i].daubed).length), 5);
+  }
+
+  function renderSoloSkills() {
+    BOT_NAMES.forEach((name, i) => {
+      const sel = $('soloSkillSel' + i);
+      if (!sel) return;
+      sel.value = soloSkills[i];
+      sel.title = `${name} — ${BOT_SKILLS[soloSkills[i]].label}: casual bots miss calls, sharp ones chase them`;
+      const wrap = $('soloSkillSel' + i + 'Wrap');
+      if (wrap) wrap.hidden = mode !== 'solo' || i >= soloBots;
+    });
+  }
+
+  function renderSoloOpponents() {
+    renderSoloSkills();
+    const wrap = $('soloBotsWrap');
+    if (wrap) {
+      wrap.title = soloBots
+        ? `Daily solo bot winnings: ${soloWonToday()} of ${SOLO_WIN_CAP} points used`
+        : '';
+    }
+    const strip = $('soloBots');
+    if (!strip) return;
+    const show = mode === 'solo' && soloOpponents.length > 0;
+    strip.hidden = !show;
+    strip.innerHTML = '';
+    if (!show) return;
+    soloOpponents.forEach(bot => {
+      const left = soloBotLeft(bot.card);
+      const chip = document.createElement('span');
+      chip.className = 'solo-bot';
+      chip.append(document.createTextNode('🤖 ' + bot.name + ' · '));
+      const b = document.createElement('b');
+      b.textContent = left === 0 ? 'BINGO' : left + ' to go';
+      chip.appendChild(b);
+      const spec = BOT_SKILLS[bot.skill] || BOT_SKILLS.normal;
+      const label = spec.label.toLowerCase();
+      chip.title = (left === 0
+        ? `${bot.name} (${label}) has completed ${patternLabel(soloPattern).toLowerCase()}`
+        : `${bot.name} (${label}) still needs ${left} square${left === 1 ? '' : 's'} for ${patternLabel(soloPattern).toLowerCase()}`) + ` · ${spec.prize} points if you beat it`;
+      strip.appendChild(chip);
+    });
+  }
 
   /* Levels 3 and 4 unlock with a fast solo win or a live daily streak; once
      earned they stay unlocked in localStorage. */
@@ -1610,6 +1866,34 @@
         }
       });
     }
+    const bots = $('soloBotSel');
+    if (bots) {
+      bots.value = String(soloBots);
+      bots.addEventListener('change', () => {
+        const next = Math.max(0, Math.min(3, parseInt(bots.value, 10) || 0));
+        soloBots = next;
+        try { localStorage.setItem(SOLO_BOTS_KEY, String(soloBots)); } catch (e) {}
+        if (mode === 'solo') {
+          soloReset();
+          showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart);
+        }
+        renderSoloOpponents();
+      });
+    }
+    BOT_NAMES.forEach((name, i) => {
+      const sel = $('soloSkillSel' + i);
+      if (!sel) return;
+      sel.addEventListener('change', () => {
+        const next = sel.value in BOT_SKILLS ? sel.value : 'normal';
+        soloSkills[i] = next;
+        try { localStorage.setItem(SOLO_SKILLS_KEY, JSON.stringify(soloSkills)); } catch (e) {}
+        if (mode === 'solo' && soloBots > i) {
+          soloReset();
+          showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart);
+        }
+        renderSoloSkills();
+      });
+    });
     refreshSoloLevels();
     const hintsBtn = $('soloHintsBtn');
     if (hintsBtn) {
@@ -1792,6 +2076,9 @@
   function soloReset() {
     clearInterval(timer);
     timer = null;
+    soloRound += 1;
+    soloBotTimers.forEach(id => clearTimeout(id));
+    soloBotTimers.clear();
     running = false;
     finished = false;
     balls = 0;
@@ -1799,8 +2086,14 @@
     calledSet = new Set();
     pool = shuffle(Array.from({length: 75}, (_, i) => i + 1));
     cells = makeCard(patternFreeCenter(soloPattern));
+    soloOpponents = Array.from({length: soloBots}, (_, i) => ({
+      name: BOT_NAMES[i],
+      skill: soloSkills[i] || 'normal',
+      card: makeCard(patternFreeCenter(soloPattern))
+    }));
     pendingDaubs.clear();
     renderCard();
+    renderSoloOpponents();
     clearHistory();
     updateHud();
     showCall();
@@ -1823,6 +2116,53 @@
     showCall();
     addHistory(l, n);
     markCalledCells();
+    if (soloOpponents.length) soloOpponents.forEach(bot => soloBotReact(bot, n));
+  }
+
+  /* Solo bots daub like the room ones: near-certain on a fresh call, plus a
+     lazy catch-up on numbers they missed. First bingo wins the card. */
+  function soloBotReact(bot, n) {
+    const round = soloRound;
+    const skill = BOT_SKILLS[bot.skill] || BOT_SKILLS.normal;
+    const tryDaub = (idx, chance) => {
+      const cell = bot.card[idx];
+      if (!cell || cell.free || cell.daubed) return;
+      if (Math.random() > chance) return;
+      const id = setTimeout(() => {
+        soloBotTimers.delete(id);
+        if (!running || round !== soloRound) return;
+        const current = bot.card[idx];
+        if (!current || current.daubed) return;
+        current.daubed = true;
+        renderSoloOpponents();
+        if (findWin(bot.card, soloPattern)) soloBotWin(bot);
+      }, skill.delay[0] + Math.random() * (skill.delay[1] - skill.delay[0]));
+      soloBotTimers.add(id);
+    };
+    const fresh = bot.card.findIndex(c => c.n === n);
+    if (fresh >= 0) tryDaub(fresh, skill.fresh);
+    calledSet.forEach(called => {
+      if (called === n) return;
+      const idx = bot.card.findIndex(c => c.n === called);
+      if (idx >= 0) tryDaub(idx, skill.catch);
+    });
+  }
+
+  function soloBotWin(bot) {
+    if (!running) return;
+    running = false;
+    finished = true;
+    clearInterval(timer);
+    timer = null;
+    soloBotTimers.forEach(id => clearTimeout(id));
+    soloBotTimers.clear();
+    recordSoloRound(false);
+    renderSoloOpponents();
+    status(`🤖 ${bot.name} completed ${patternLabel(soloPattern).toLowerCase()} on ball ${balls} first.`);
+    showOverlay('🤖', bot.name + ' got there first', `${bot.name} finished ${patternLabel(soloPattern).toLowerCase()} on ball ${balls}. Losing to a bot costs nothing — shuffle and take the next card.`, '↻ New card', () => {
+      soloReset();
+      soloStart();
+    });
   }
 
   function soloStart() {
@@ -1859,8 +2199,12 @@
     finished = true;
     clearInterval(timer);
     timer = null;
+    soloBotTimers.forEach(id => clearTimeout(id));
+    soloBotTimers.clear();
     if (soloPattern === dailyPatternKey()) markDailyPlayed();
     recordSoloRound(true);
+    const offered = soloBotPrize();
+    const prize = awardSoloBotPrize(offered);
     const froze = soloPattern === 'blackout' ? awardStreakFreeze() : false;
     hit.forEach(i => { if (grid.children[i]) grid.children[i].classList.add('win'); });
     const previous = currentBest();
@@ -1872,11 +2216,18 @@
     refreshSoloLevels();
     const freshUnlocks = [...unlockedLevelsNow()].filter(k => !unlockedBefore.has(k));
     updateHud();
+    renderSoloOpponents();
     status(`${patternLabel(soloPattern)} — bingo!`);
     const unlockText = freshUnlocks.length
       ? ` 🔓 ${freshUnlocks.map(k => SOLO_LEVEL_LABELS[k].replace(/^\d+ · /, '')).join(' and ')} unlocked!`
       : '';
-    const text = `${patternLabel(soloPattern)} completed after ${balls} balls.` + (isBest ? ' That is a new best!' : ` Best: ${previous} balls.`) + (froze ? ' ❄ A streak freeze is banked for one missed day.' : '') + unlockText;
+    const beatText = offered <= 0
+      ? ''
+      : prize > 0
+        ? ` +${prize} points for beating ${soloBots === 1 ? 'the bot' : soloBots + ' bots'}` +
+          (prize < offered ? ` (daily solo bot cap ${SOLO_WIN_CAP}: ${offered - prize} held back).` : '.')
+        : ` Daily solo bot cap (${SOLO_WIN_CAP} points) is spent — no points this round.`;
+    const text = `${patternLabel(soloPattern)} completed after ${balls} balls.` + (isBest ? ' That is a new best!' : ` Best: ${previous} balls.`) + (froze ? ' ❄ A streak freeze is banked for one missed day.' : '') + unlockText + beatText;
     showOverlay('🎉', 'BINGO!', text, '▶ New card', () => {
       soloReset();
       soloStart();
@@ -1888,6 +2239,8 @@
     finished = true;
     clearInterval(timer);
     timer = null;
+    soloBotTimers.forEach(id => clearTimeout(id));
+    soloBotTimers.clear();
     if (soloPattern === dailyPatternKey()) markDailyPlayed();
     recordSoloRound(false);
     status(`All 75 balls called — no ${patternLabel(soloPattern).toLowerCase()} this time.`);
@@ -1909,6 +2262,7 @@
     newBtn.hidden = inRoom;
     $('soloPatternWrap').hidden = inRoom;
     $('soloSpeedWrap').hidden = inRoom;
+    $('soloBotsWrap').hidden = inRoom;
     $('levelNext').hidden = inRoom;
     $('soloHintsBtn').hidden = inRoom;
     $('dailyBtn').hidden = inRoom;
@@ -1916,6 +2270,7 @@
     if (inRoom) overlay.classList.remove('show');
     updateHud();
     if (inRoom) renderRoomBar();
+    renderSoloOpponents();
     renderStreak();
   }
 
@@ -1928,7 +2283,7 @@
       const chip = document.createElement('span');
       chip.className = 'room-player' + (p.id === selfId ? ' me' : '') + (p.connected === false ? ' off' : '');
       chip.textContent = (p.bot ? '🤖 ' : '') + p.name + (p.wins ? ' ×' + p.wins : '');
-      chip.title = `${p.id === selfId ? 'You' : (p.bot ? 'Smart bot' : 'Player')} · ${p.credits} points`;
+      chip.title = `${p.id === selfId ? 'You' : (p.bot ? `${(BOT_SKILLS[p.skill] || BOT_SKILLS.normal).label} bot` : 'Player')} · ${p.credits} points`;
       roomPlayersEl.appendChild(chip);
     });
     chatUnreadEl.hidden = unread === 0;
@@ -1984,6 +2339,43 @@
 
   function clearRoomError() { setRoomError(''); }
 
+  function saveRoomBotSkills() {
+    try { localStorage.setItem(ROOM_BOT_SKILLS_KEY, JSON.stringify(roomBotSkills)); } catch (e) {}
+  }
+
+  function setBotSkill(index, value) {
+    if (!(value in BOT_SKILLS) || index < 0 || index >= BOT_NAMES.length) return;
+    roomBotSkills[index] = value;
+    saveRoomBotSkills();
+    roomPlayers.forEach(p => {
+      if (p.bot && BOT_NAMES.indexOf(p.name) === index) p.skill = value;
+    });
+  }
+
+  function syncCreateBotSkills() {
+    const sel = $('botSel');
+    const count = Math.max(0, Math.min(3, Number(sel && sel.value) || 0));
+    BOT_NAMES.forEach((name, i) => {
+      const wrap = $('botSkillSel' + i + 'Wrap');
+      if (wrap) wrap.hidden = i >= count;
+    });
+  }
+
+  function renderBotSkillFields() {
+    BOT_NAMES.forEach((name, i) => {
+      const create = $('botSkillSel' + i);
+      if (create) create.value = roomBotSkills[i];
+      const lobby = $('lobbyBotSkill' + i);
+      if (lobby) {
+        lobby.value = roomBotSkills[i];
+        lobby.disabled = roomBots <= i;
+      }
+      const wrap = $('lobbyBotSkill' + i + 'Wrap');
+      if (wrap) wrap.hidden = roomBots <= i;
+    });
+    syncCreateBotSkills();
+  }
+
   function renderLobby() {
     if (!isRoom() || roomLobby.hidden) return;
     lobbyCode.textContent = roomCode || '—';
@@ -2001,7 +2393,7 @@
       name.textContent = p.name;
       const tags = document.createElement('span');
       tags.className = 'lobby-tags';
-      tags.textContent = [p.id === 'host' ? 'HOST' : '', p.bot ? 'BOT' : '', p.id === selfId ? 'YOU' : '', p.wins ? p.wins + ' WIN' + (p.wins === 1 ? '' : 'S') : '']
+      tags.textContent = [p.id === 'host' ? 'HOST' : '', p.bot ? 'BOT' : '', p.bot ? (BOT_SKILLS[p.skill] || BOT_SKILLS.normal).label.toUpperCase() : '', p.id === selfId ? 'YOU' : '', p.wins ? p.wins + ' WIN' + (p.wins === 1 ? '' : 'S') : '']
         .filter(Boolean).join(' · ');
       li.append(avatar, name, tags);
       lobbyPlayers.appendChild(li);
@@ -2016,6 +2408,7 @@
       $('lobbyCustomPaceWrap').hidden = !!pacePreset;
       $('lobbyCustomPace').value = String(roomPace / 1000);
       $('lobbyBots').value = String(roomBots);
+      renderBotSkillFields();
       $('lobbyTable').value = String(roomStake);
       $('lobbyCards').value = String(roomCards);
       $('lobbyHints').value = roomHints ? '1' : '0';
@@ -2026,7 +2419,10 @@
     } else {
       hostSettings.hidden = true;
       guestSettings.hidden = false;
-      guestSettings.textContent = `Win: ${patternLabel(roomPattern)} · Pace: ${paceLabel(roomPace)} · ${tableLabel()} · ${roomCards} card${roomCards === 1 ? '' : 's'} each · Hints: ${roomHints ? 'cyan' : 'off'}`;
+      const botLine = roster.filter(p => p.bot)
+        .map(p => `${p.name} ${(BOT_SKILLS[p.skill] || BOT_SKILLS.normal).label.toLowerCase()}`)
+        .join(', ');
+      guestSettings.textContent = `Win: ${patternLabel(roomPattern)} · Pace: ${paceLabel(roomPace)} · ${tableLabel()} · ${roomCards} card${roomCards === 1 ? '' : 's'} each · Hints: ${roomHints ? 'cyan' : 'off'} · Bots: ${botLine || 'none'}`;
       startRoomBtn.hidden = true;
       lobbyWait.hidden = false;
       lobbyWait.textContent = roster.length < 2 ? 'Waiting for more players…' : 'Waiting for the host to start…';
@@ -2282,6 +2678,7 @@
       name: p.name,
       wins: p.wins || 0,
       bot: !!p.bot,
+      skill: p.bot ? (p.skill || 'normal') : undefined,
       connected: p.connected !== false,
       credits: p.credits || 0,
       bingos: p.bingos ? p.bingos.length : 0
@@ -2297,7 +2694,7 @@
 
   function broadcastLobby() {
     roster = publicPlayers();
-    broadcast({t: 'lobby', code: roomCode, pattern: roomPattern, pace: roomPace, players: roster, stake: roomStake, cardsCount: roomCards, pot: roomPot, jackpot: roomJackpot, hints: roomHints ? 1 : 0});
+    broadcast({t: 'lobby', code: roomCode, pattern: roomPattern, pace: roomPace, players: roster, stake: roomStake, cardsCount: roomCards, pot: roomPot, jackpot: roomJackpot, hints: roomHints ? 1 : 0, botSkills: roomBotSkills.slice()});
     updateHud();
     renderRoomBar();
     if (!roomLobby.hidden) renderLobby();
@@ -2344,7 +2741,8 @@
         pot: roomPot,
         jackpot: roomJackpot,
         you: player.credits,
-        hints: roomHints ? 1 : 0
+        hints: roomHints ? 1 : 0,
+        botSkills: roomBotSkills.slice()
       });
     } catch (e) {}
     systemChat(player.name + ' joined the room.');
@@ -2425,13 +2823,14 @@
 
   function botReact(bot, n) {
     if (!bot.cards) return;
+    const skill = BOT_SKILLS[bot.skill] || BOT_SKILLS.normal;
     const tryDaub = (ci, idx, chance) => {
       const card = bot.cards[ci];
       const cell = card && card[idx];
       if (!cell || cell.free || cell.daubed) return;
       if (Math.random() > chance) return;
       const round = roomRound;
-      const delay = 260 + Math.random() * 720;
+      const delay = skill.delay[0] + Math.random() * (skill.delay[1] - skill.delay[0]);
       setTimeout(() => {
         /* a bot's queued daub must not land on the next round's card */
         if (!roomRunning || round !== roomRound) return;
@@ -2441,13 +2840,13 @@
     };
     bot.cards.forEach((card, ci) => {
       const fresh = card.findIndex(c => c.n === n);
-      if (fresh >= 0) tryDaub(ci, fresh, 0.94);
+      if (fresh >= 0) tryDaub(ci, fresh, skill.fresh);
     });
     roomCalled.forEach(called => {
       if (called === n) return;
       bot.cards.forEach((card, ci) => {
         const idx = card.findIndex(c => c.n === called);
-        if (idx >= 0) tryDaub(ci, idx, 0.28);
+        if (idx >= 0) tryDaub(ci, idx, skill.catch);
       });
     });
   }
@@ -2691,6 +3090,7 @@
       roomPlayers.set('bot-' + name.toLowerCase(), {
         id: 'bot-' + name.toLowerCase(),
         name,
+        skill: roomBotSkills[BOT_NAMES.indexOf(name)] || 'normal',
         cards: null,
         bingos: [],
         credits: BOT_CREDITS,
@@ -2710,6 +3110,11 @@
     roomPattern = resolvePatternSelection($('patternSel').value);
     roomPace = paceFor($('paceSel').value, $('customPace').value);
     roomBots = Math.max(0, Math.min(3, Number($('botSel').value) || 0));
+    BOT_NAMES.forEach((name, i) => {
+      const sel = $('botSkillSel' + i);
+      if (sel && sel.value in BOT_SKILLS) roomBotSkills[i] = sel.value;
+    });
+    saveRoomBotSkills();
     roomStake = Math.max(0, Number($('tableSel').value) || 0);
     roomCards = Math.max(1, Math.min(3, Number($('cardsSel').value) || 1));
     roomHints = $('hintsSel').value === '1';
@@ -2911,6 +3316,9 @@
         roomPot = Number(data.pot) || 0;
         roomJackpot = Number(data.jackpot) || 0;
         roomHints = !!data.hints;
+        if (Array.isArray(data.botSkills)) {
+          roomBotSkills = BOT_NAMES.map((name, i) => (data.botSkills[i] in BOT_SKILLS ? data.botSkills[i] : roomBotSkills[i]));
+        }
         roster = Array.isArray(data.players) ? data.players : roster;
         const meNow = roster.find(x => x.id === selfId);
         if (meNow) setMyCredits(meNow.credits);
@@ -3335,6 +3743,7 @@
     broadcastLobby();
     renderLobby();
   });
+  $('botSel').addEventListener('change', syncCreateBotSkills);
   $('paceSel').addEventListener('change', e => {
     $('customPaceWrap').hidden = e.target.value !== 'custom';
   });
@@ -3358,6 +3767,16 @@
     setBotCount(Number(e.target.value) || 0);
     broadcastLobby();
     renderLobby();
+  });
+  BOT_NAMES.forEach((name, i) => {
+    const sel = $('lobbyBotSkill' + i);
+    if (!sel) return;
+    sel.addEventListener('change', e => {
+      if (mode !== 'host') return;
+      setBotSkill(i, e.target.value);
+      broadcastLobby();
+      renderLobby();
+    });
   });
   $('lobbyTable').addEventListener('change', e => {
     if (mode !== 'host') return;
@@ -3416,6 +3835,7 @@
     $('hostName').value = savedName;
     $('joinName').value = savedName;
   }
+  renderBotSkillFields();
 
   const storedWallet = readWallet();
   if (storedWallet) {

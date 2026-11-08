@@ -1,35 +1,11 @@
 const fs = require('fs');
-const { JSDOM } = require('jsdom');
+const { bootGame, installClock, flushClock , createHarness} = require('./helpers');
+
+const suite = createHarness();
+const {check, $} = suite;
 
 const HTML = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
 const PAGE_URL = 'https://example.com/bingo-2.html';
-
-let failures = 0;
-const check = (name, cond, extra) => {
-  if (cond) console.log('PASS ' + name);
-  else { failures++; console.log('FAIL ' + name + (extra ? ' :: ' + extra : '')); }
-};
-const sleep = () => new Promise(r => setImmediate(r));
-
-function installClock(w) {
-  const timers = new Map();
-  let nextId = 1, now = 0;
-  w.setInterval = (fn, ms) => { const id = nextId++; timers.set(id, { fn, ms, next: now + ms, every: true }); return id; };
-  w.setTimeout = (fn, ms = 0) => { const id = nextId++; timers.set(id, { fn, ms, next: now + ms, every: false }); return id; };
-  w.clearInterval = w.clearTimeout = id => { timers.delete(id); };
-  w.__advance = ms => {
-    const end = now + ms;
-    for (;;) {
-      let best = null;
-      for (const [id, t] of timers) if (t.next <= end && (!best || t.next < best.t.next)) best = { id, t };
-      if (!best) break;
-      now = best.t.next;
-      if (best.t.every) best.t.next += best.t.ms; else timers.delete(best.id);
-      try { best.t.fn(); } catch (e) { console.log('TIMER ERROR: ' + e.message + '\n' + e.stack); failures++; }
-    }
-    now = end;
-  };
-}
 
 function installPeer(w, broker) {
   class FakeConn {
@@ -74,20 +50,17 @@ function installPeer(w, broker) {
 }
 
 function boot(broker) {
-  const dom = new JSDOM(HTML, {
-    runScripts: 'dangerously',
+  return bootGame({
+    html: HTML,
     url: PAGE_URL,
-    pretendToBeVisual: true,
     beforeParse(w) {
-      installClock(w);
+      installClock(w, error => { console.log('TIMER ERROR: ' + error.message + '\n' + error.stack); suite.failures++; });
       installPeer(w, broker);
-      w.addEventListener('error', e => { console.log('PAGE ERROR: ' + (e.message || e.error)); failures++; });
-    }
+    },
+    onError: message => { suite.failures++; console.log('PAGE ERROR: ' + message); }
   });
-  return dom;
 }
-async function flush(w, ms = 0) { for (let i = 0; i < 8; i++) { w.__advance(ms); await sleep(); } }
-const $ = (d, id) => d.getElementById(id);
+const flush = (w, ms = 0) => flushClock(w, ms, 8);
 
 (async () => {
   /* ---------- solo ---------- */
@@ -115,6 +88,8 @@ const $ = (d, id) => d.getElementById(id);
   $(hd, 'tableSel').value = '10';
   $(hd, 'cardsSel').value = '2';
   $(hd, 'botSel').value = '1';
+  $(hd, 'botSel').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  check('setup: bot skill pickers follow the bot count', $(hd, 'botSkillSel0') && $(hd, 'botSkillSel0').options.length === 3 && $(hd, 'botSkillSel1Wrap').hidden === true, $(hd, 'botSkillSel0') ? $(hd, 'botSkillSel0').options.length : 'missing');
   $(hd, 'roomsBtn').click();
   await flush(hw);
   $(hd, 'createBtn').click();
@@ -124,6 +99,31 @@ const $ = (d, id) => d.getElementById(id);
   check('host: room created with 5-char code', /^[A-Z0-9]{5}$/.test(code), code);
   check('host: lobby shows 2 players', $(hd, 'lobbyCount').textContent === '2', $(hd, 'lobbyCount').textContent);
   check('host: pot preview mentions credits', /pot \d+/.test($(hd, 'lobbyPot').textContent), $(hd, 'lobbyPot').textContent);
+
+  check('host: lobby has a skill picker per bot', $(hd, 'lobbyBotSkill0') && $(hd, 'lobbyBotSkill0').options.length === 3);
+  check('host: bots start on normal skill', $(hd, 'lobbyBotSkill0').value === 'normal', $(hd, 'lobbyBotSkill0').value);
+  check('host: unused bots have no skill field', $(hd, 'lobbyBotSkill1Wrap').hidden === true && $(hd, 'lobbyBotSkill2Wrap').hidden === true);
+  $(hd, 'lobbyBotSkill0').value = 'casual';
+  $(hd, 'lobbyBotSkill0').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  await flush(hw, 20);
+  check('host: skill choice is saved per bot', hw.localStorage.getItem('gh.bingo2.roomBotSkills') === JSON.stringify(['casual', 'normal', 'normal']), hw.localStorage.getItem('gh.bingo2.roomBotSkills'));
+  $(hd, 'lobbyBots').value = '3';
+  $(hd, 'lobbyBots').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  await flush(hw, 20);
+  check('host: three bots bring three skill pickers', $(hd, 'lobbyBotSkill2Wrap').hidden === false);
+  $(hd, 'lobbyBotSkill1').value = 'sharp';
+  $(hd, 'lobbyBotSkill1').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  await flush(hw, 20);
+  const lobbyText = $(hd, 'lobbyPlayers').textContent.replace(/\s+/g, ' ');
+  check('host: each bot shows its own skill', /Rex\s*BOT\s*·\s*CASUAL/.test(lobbyText) && /Nova\s*BOT\s*·\s*SHARP/.test(lobbyText) && /Pip\s*BOT\s*·\s*NORMAL/.test(lobbyText), lobbyText);
+  $(hd, 'lobbyBots').value = '0';
+  $(hd, 'lobbyBots').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  await flush(hw, 20);
+  check('host: skill fields hide with no bots', $(hd, 'lobbyBotSkill0Wrap').hidden === true);
+  $(hd, 'lobbyBots').value = '1';
+  $(hd, 'lobbyBots').dispatchEvent(new hw.Event('change', {bubbles: true}));
+  await flush(hw, 20);
+  check('host: a returning bot keeps its skill', $(hd, 'lobbyBotSkill0').value === 'casual', $(hd, 'lobbyBotSkill0').value);
 
   /* ---------- guest joins ---------- */
   const guestDom = boot(broker);
@@ -136,6 +136,7 @@ const $ = (d, id) => d.getElementById(id);
   await flush(gw, 30);
   check('guest: entered lobby', $(gd, 'lobbyCode').textContent.trim() === code, $(gd, 'lobbyCode').textContent);
   check('host: room now shows 3 players', $(hd, 'lobbyCount').textContent === '3', $(hd, 'lobbyCount').textContent);
+  check('guest: settings name the casual bot', /Bots: Rex casual/.test($(gd, 'guestSettings').textContent), $(gd, 'guestSettings').textContent);
 
   /* ---------- round ---------- */
   $(hd, 'startRoomBtn').click();
@@ -193,6 +194,5 @@ const $ = (d, id) => d.getElementById(id);
   check('host: record counted both rounds', $(hd, 'recRoomGames').textContent === '2' && walletOf(typeof hw !== 'undefined' ? hw : null).room.games === 2, $(hd, 'recRoomGames').textContent + ' / ' + JSON.stringify(walletOf(typeof hw !== 'undefined' ? hw : null)));
   check('host: card costs tracked', walletOf(typeof hw !== 'undefined' ? hw : null).room.staked === 40, JSON.stringify(walletOf(typeof hw !== 'undefined' ? hw : null)));
   check('guest: wallet panel mirrors the balance', $(gd, 'walletCredits').textContent === $(gd, 'credits').textContent && $(gd, 'credits').textContent === '960', $(gd, 'walletCredits').textContent + ' vs ' + $(gd, 'credits').textContent);
-  console.log(failures ? '\n' + failures + ' FAILURE(S)' : '\nALL CHECKS PASSED');
-  process.exit(failures ? 1 : 0);
+  process.exit(suite.report('ROOMS'));
 })().catch(e => { console.log('HARNESS ERROR: ' + e.stack); process.exit(1); });

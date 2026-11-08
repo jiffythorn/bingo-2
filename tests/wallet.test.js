@@ -1,23 +1,13 @@
-const fs = require('fs');
-const { JSDOM } = require('jsdom');
-const GAME = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+const { bootGame , createHarness} = require('./helpers');
 
-let failures = 0;
-const check = (n, c, x) => { if (c) console.log('PASS ' + n); else { failures++; console.log('FAIL ' + n + (x ? ' :: ' + x : '')); } };
-const $ = (d, id) => d.document.getElementById(id);
+const suite = createHarness();
+const {check, $} = suite;
 
-function boot(seed) {
-  return new JSDOM(GAME, {
-    runScripts: 'dangerously',
-    url: 'https://example.com/bingo-2.html',
-    pretendToBeVisual: true,
-    beforeParse(w) {
-      if (seed && seed.wallet) w.localStorage.setItem('gh.bingo2.wallet', JSON.stringify(seed.wallet));
-      if (seed && seed.dailyBonus) w.localStorage.setItem('gh.bingo2.dailyBonus', seed.dailyBonus);
-      w.addEventListener('error', e => { failures++; console.log('PAGE ERROR: ' + (e.message || e.error)); });
-    }
-  }).window;
-}
+
+const boot = (seed = {}) => bootGame({
+  seed,
+  onError: message => { suite.failures++; console.log('PAGE ERROR: ' + message); }
+}).window;
 
 const codeOf = d => ($(d, 'walletCodeOut').textContent || '').trim();
 const stored = d => JSON.parse(d.localStorage.getItem('gh.bingo2.wallet') || '{}');
@@ -33,17 +23,27 @@ function restore(d, code) {
   return { preview, ready };
 }
 
+// One literal code per shipped codec version, 2,500 points each. They stay
+// valid forever, so a version bump adds a row instead of recapturing old ones.
+// v4 = 10 groups, v5 = 12, v6 = 14.
+const LEGACY_CODES = {
+  4: 'GH2-L3BS-PGFK-WQ6Y-R4K2-YMTZ-C3VU-HWEP-CWWD-E6XF-FZBT',
+  5: 'GH2-L7BS-PGFK-WQ6Y-R4K2-YMTZ-C3VU-HWEP-CWWD-E6IW-5NB5-RDI7-OFNG',
+  6: 'GH2-LTBS-PGFK-WQ6Y-R4K2-YMTZ-C3VU-HWEP-CWWD-E6IW-5NB5-RDYV-VQZH-SFYC-GZQQ'
+};
+const LEGACY_GROUPS = {4: 10, 5: 12, 6: 14};
+
 // 1. legacy v1 wallet migrates to points with an empty record
 const d1 = boot({ wallet: { v: 1, credits: 2500, updated: 0 } });
 check('v1 wallet loads points', $(d1, 'credits').textContent === '2500', $(d1, 'credits').textContent);
 check('v1 wallet shows points in panel', $(d1, 'walletCredits').textContent === '2,500', $(d1, 'walletCredits').textContent);
 check('v1 wallet starts an empty record', $(d1, 'recRoomGames').textContent === '0' && $(d1, 'recRoomWins').textContent === '0' && $(d1, 'recRoomEarned').textContent === '0');
 $(d1, 'walletCopy').click();
-check('wallet saved as v5 with points', stored(d1).v === 5 && stored(d1).points === 2500, JSON.stringify(stored(d1)));
+check('wallet saved as v6 with points', stored(d1).v === 6 && stored(d1).points === 2500, JSON.stringify(stored(d1)));
 
 // 2. code shape
 const code = copyCode(d1);
-check('restore code is the v5 12-group format', /^GH2(-[A-Z2-7]{4}){12}$/.test(code), code);
+check('restore code is the v6 14-group format', /^GH2(-[A-Z2-7]{4}){14}$/.test(code), code);
 check('copy shows the code', $(d1, 'walletCodeOut').hidden === false);
 
 // 3. record renders and survives a restore into a fresh browser
@@ -54,7 +54,7 @@ const r1 = restore(d1, code2);
 check('preview names points and the record', /1,000 points/.test(r1.preview) && /4 room games \(2 won\)/.test(r1.preview), r1.preview);
 check('restore replaces the balance', $(d1, 'credits').textContent === '1000', $(d1, 'credits').textContent);
 check('restore brings the record across', $(d1, 'recRoomGames').textContent === '4' && $(d1, 'recRoomWins').textContent === '2' && $(d1, 'recRoomEarned').textContent === '3,200', [$(d1, 'recRoomGames').textContent, $(d1, 'recRoomWins').textContent, $(d1, 'recRoomEarned').textContent].join('/'));
-check('restore persisted v5', stored(d1).v === 5 && stored(d1).points === 1000 && stored(d1).room.games === 4 && stored(d1).room.wins === 2 && stored(d1).room.earned === 3200, JSON.stringify(stored(d1)));
+check('restore persisted v6', stored(d1).v === 6 && stored(d1).points === 1000 && stored(d1).room.games === 4 && stored(d1).room.wins === 2 && stored(d1).room.earned === 3200, JSON.stringify(stored(d1)));
 
 // 4. merging can only move the record up
 const d3 = boot({ wallet: { v: 2, points: 300, games: 9, wins: 5, earned: 9000, updated: 2 } });
@@ -113,7 +113,7 @@ const dayOf = d => JSON.parse(d.localStorage.getItem('gh.bingo2.daily') || 'null
 const d11 = boot({});
 d11.localStorage.setItem('gh.bingo2.daily', JSON.stringify({last: dayKey(0), streak: 5, best: 9}));
 const code11 = copyCode(d11);
-check('streaked code is the v5 12-group format', /^GH2(-[A-Z2-7]{4}){12}$/.test(code11), code11);
+check('streaked code is the v6 14-group format', /^GH2(-[A-Z2-7]{4}){14}$/.test(code11), code11);
 const d12 = boot({});
 $(d12, 'walletRestoreBtn').click();
 $(d12, 'walletCodeInput').value = code11;
@@ -133,7 +133,7 @@ restore(d14, code11);
 check('a same-day restore keeps the longer streak', dayOf(d14).streak === 7 && dayOf(d14).best === 9, JSON.stringify(dayOf(d14)));
 const d15 = boot({});
 d15.localStorage.setItem('gh.bingo2.daily', JSON.stringify({last: dayKey(-3), streak: 3, best: 3}));
-restore(d15, 'GH2-L3BS-PGFK-WQ6Y-R4K2-YMTZ-C3VU-HWEP-CWWD-E6XF-FZBT');
+restore(d15, LEGACY_CODES[4]);
 check('a v4 code still restores points', stored(d15).points === 2500, JSON.stringify(stored(d15)) + ' preview=' + $(d15, 'walletPreview').textContent);
 check('a v4 code leaves the local streak alone', dayOf(d15).streak === 3 && dayOf(d15).last === dayKey(-3), JSON.stringify(dayOf(d15)));
 
@@ -182,7 +182,7 @@ const d23 = boot({});
 d23.localStorage.setItem('gh.bingo2.daily', JSON.stringify({last: dayKey(0), streak: 3, best: 3, freezes: 0}));
 restore(d23, freezeCode);
 check('a carried freeze joins a local streak', dayOf(d23).freezes === 1 && dayOf(d23).streak === 3, JSON.stringify(dayOf(d23)));
-check('code length is unchanged by the freeze', /^GH2(-[A-Z2-7]{4}){12}$/.test(freezeCode), freezeCode);
+check('code length is unchanged by the freeze', /^GH2(-[A-Z2-7]{4}){14}$/.test(freezeCode), freezeCode);
 
 // 11. comeback top-up when the cheapest card is unaffordable
 const emptyWallet = { v: 5, points: 0, solo: { games: 0, wins: 0 }, room: { games: 0, wins: 0, earned: 0, staked: 0 }, updated: 1 };
@@ -296,5 +296,46 @@ const h6 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey
 const h6cells = [...$(h6, 'hudLadderDays').querySelectorAll('li')];
 check('two missed days clear the HUD preview progress', $(h6, 'hudLadder').hidden === false && h6cells.every(li => !li.classList.contains('is-done')) && h6cells[0].classList.contains('is-next'), $(h6, 'hudLadder').getAttribute('aria-label'));
 
-console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL WALLET CHECKS PASSED');
-process.exit(failures ? 1 : 0);
+// 16. the solo bot tally rides in the code and cannot be reset
+const d24 = boot({soloWon: {d: dayKey(0), won: 40}});
+const tallyCode = copyCode(d24);
+check('tally code keeps the 14-group shape', /^GH2(-[A-Z2-7]{4}){14}$/.test(tallyCode), tallyCode);
+const d25 = boot({});
+$(d25, 'walletRestoreBtn').click();
+$(d25, 'walletCodeInput').value = tallyCode;
+$(d25, 'walletCheck').click();
+check('preview explains the carried bot tally', /40 solo bot points won today/.test($(d25, 'walletPreview').textContent), $(d25, 'walletPreview').textContent);
+restore(d25, tallyCode);
+check('restore carries the bot tally', JSON.parse(d25.localStorage.getItem('gh.bingo2.soloWon') || '{}').won === 40, d25.localStorage.getItem('gh.bingo2.soloWon'));
+check('the success message names the carried tally', /solo bot tally stands at 40 of 100/.test($(d25, 'walletPreview').textContent), $(d25, 'walletPreview').textContent);
+check('the panel shows the carried tally', $(d25, 'recBotWon').textContent === '40/100', $(d25, 'recBotWon').textContent);
+const d26 = boot({soloWon: {d: dayKey(0), won: 70}});
+restore(d26, tallyCode);
+check('a restore cannot lower today\'s tally', JSON.parse(d26.localStorage.getItem('gh.bingo2.soloWon') || '{}').won === 70, d26.localStorage.getItem('gh.bingo2.soloWon'));
+check('the success message keeps the higher tally', /solo bot tally stands at 70 of 100/.test($(d26, 'walletPreview').textContent), $(d26, 'walletPreview').textContent);
+const d27 = boot({soloWon: {d: dayKey(-1), won: 90}});
+restore(d27, tallyCode);
+check('an older local tally is replaced', JSON.parse(d27.localStorage.getItem('gh.bingo2.soloWon') || '{}').won === 40, d27.localStorage.getItem('gh.bingo2.soloWon'));
+const legacyRuns = Object.keys(LEGACY_CODES).map(v => {
+  const d = boot({soloWon: {d: dayKey(0), won: 20}});
+  const legacy = LEGACY_CODES[v];
+  check(`legacy v${v} code keeps its shape`, legacy.split('-').length - 1 === LEGACY_GROUPS[v], legacy);
+  restore(d, legacy);
+  return {
+    v,
+    points: stored(d).points,
+    tally: JSON.parse(d.localStorage.getItem('gh.bingo2.soloWon') || '{}').won,
+    carried: /solo bot tally stands at/.test($(d, 'walletPreview').textContent)
+  };
+});
+check('every legacy code restores its points', legacyRuns.every(r => r.points === 2500), JSON.stringify(legacyRuns));
+check('legacy codes bring no tally and leave the local one alone', legacyRuns.every(r => r.tally === 20 && !r.carried), JSON.stringify(legacyRuns));
+
+const d29 = boot({soloWon: {d: dayKey(1), won: 60}});
+const futureCode = copyCode(d29);
+const d30 = boot({soloWon: {d: dayKey(0), won: 20}});
+restore(d30, futureCode);
+check('a future-dated tally is ignored', JSON.parse(d30.localStorage.getItem('gh.bingo2.soloWon') || '{}').won === 20, d30.localStorage.getItem('gh.bingo2.soloWon'));
+check('the future tally is not announced', !/solo bot tally stands at/.test($(d30, 'walletPreview').textContent), $(d30, 'walletPreview').textContent);
+
+process.exit(suite.report('WALLET'));

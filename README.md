@@ -15,9 +15,11 @@ Project status, architecture notes and remaining work: [PROJECT.md](PROJECT.md).
 - **Streak freeze** — finish a blackout (solo, or win a blackout room) to bank one freeze. It is spent automatically to cover exactly one missed day.
 - **Seven-day history** — a strip under the HUD marks amber for played, ❄ for a frozen day, dim for missed.
 - **Freeze reminder** — when a freeze is banked and today's pattern is still unplayed, a reminder names the pattern and offers a switch to it; "Not today" hides it until tomorrow.
+- **Solo opponents** — race up to three labelled smart bots on any solo pattern. The first bingo wins; each bot you beat pays by its skill — 5 casual, 10 normal, 15 sharp — and losing a race costs nothing. Solo bot winnings are capped at 100 points a day, shown as a 🤖 chip in the HUD and in the Your points panel. Set Opponents to None for a quiet practice card, and give each opponent its own Casual, Normal or Sharp skill to change how reliably it daubs.
 - **Solo and room standings** — solo games/wins/win rate, and room games/wins, gross points won, **net** (gross − card costs) and return on cards. Restore codes carry a runner's prizes and record.
-- **Live rooms** — host creates a table (pattern, pace, card cost, cards each), adds up to three labelled smart bots, and everyone gets in-room chat. Bots pay card costs but never collect.
-- **Portable restore codes** — a checksummed code restores points, both standings, daily streak and banked freeze on another browser (v5, 12 four-character groups). Older v1–v4 codes still decode; codes that carried a streak which has since lapsed say so.
+- **Live rooms** — host creates a table (pattern, pace, card cost, cards each), adds up to three labelled smart bots and gives each its own skill (Casual, Normal or Sharp), and everyone gets in-room chat. Bots pay card costs but never collect.
+- **Portable restore codes** — a checksummed code restores points, both standings, daily streak and banked freeze on another browser (v6, 14 four-character groups), including today's solo bot
+tally. Older v1–v5 codes still decode; codes that carried a streak which has since lapsed say so.
 
 ## Playing
 
@@ -28,7 +30,7 @@ python3 -m http.server 8080
 # then open http://localhost:8080/
 ```
 
-Solo: pick a pattern, a speed level and optional card hints (or press 🎯 Today) and start calling. Levels 3–4 unlock with a fast win (24 / 16 balls) or a 3 / 7-day streak; the next target is shown beneath the level picker. Daub each called number; complete the pattern to win. Rooms: 🌐 Rooms → create or join; the host controls rounds.
+Solo: pick a pattern, an opponent count, a speed level and optional card hints (or press 🎯 Today) and start calling. Levels 3–4 unlock with a fast win (24 / 16 balls) or a 3 / 7-day streak; the next target is shown beneath the level picker. Daub each called number; complete the pattern to win. Rooms: 🌐 Rooms → create or join; the host controls rounds.
 
 ## Tests
 
@@ -37,9 +39,9 @@ npm install
 npm test
 ```
 
-Five JSDOM suites boot `index.html` and cover patterns, wallet/restore codes,
-the solo and daily loop, gift tokens and the room flow with a fake PeerJS
-broker. See `tests/README.md`. GitHub Actions runs the same suites on every
+Six JSDOM suites boot `index.html` and cover patterns, wallet/restore codes,
+the solo and daily loop, solo opponents, gift tokens and the room flow with a
+fake PeerJS broker. See `tests/README.md`. GitHub Actions runs the same suites on every
 push and refreshes `downloads/bingo-2.zip` when the page or docs change; pull
 requests fail if the committed ZIP is stale.
 

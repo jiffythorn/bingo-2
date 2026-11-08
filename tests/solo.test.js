@@ -1,22 +1,16 @@
 const fs = require('fs');
-const { JSDOM } = require('jsdom');
+const { bootGame , createHarness} = require('./helpers');
+
+const suite = createHarness();
+const {check, $} = suite;
 let html = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
 html = html.replace('})();\n</script>', '  window.__logic = {PATTERNS, dailyPatternKey, resolvePatternSelection, markDailyPlayed, dateKey, previousDateKey, readDaily, recordSoloRound, awardStreakFreeze, renderStreak, setSoloPattern};\n})();\n</script>');
 
-let failures = 0;
-const check = (n, c, x) => { if (c) console.log('PASS ' + n); else { failures++; console.log('FAIL ' + n + (x !== undefined ? ' :: ' + x : '')); } };
-const $ = (w, id) => w.document.getElementById(id);
-function boot(seed) {
-  return new JSDOM(html, {
-    runScripts: 'dangerously',
-    url: 'https://example.com/bingo-2.html',
-    pretendToBeVisual: true,
-    beforeParse(w) {
-      Object.entries(seed || {}).forEach(([k, v]) => w.localStorage.setItem(k, v));
-      w.addEventListener('error', e => { failures++; console.log('PAGE ERROR: ' + (e.message || e.error)); });
-    }
-  }).window;
-}
+const boot = (local = {}) => bootGame({
+  html,
+  local,
+  onError: message => { suite.failures++; console.log('PAGE ERROR: ' + message); }
+}).window;
 const pick = (w, value) => {
   const sel = $(w, 'soloPatternSel');
   sel.value = value;
@@ -117,7 +111,7 @@ const st2 = JSON.parse(w8.localStorage.getItem('gh.bingo2.wallet'));
 check('solo loss counts a game but not a win', st2.solo.games === 2 && st2.solo.wins === 1, JSON.stringify(st2.solo));
 check('solo win rate shows in the panel', $(w8, 'recSoloRate').textContent === '50%', $(w8, 'recSoloRate').textContent);
 const marksSolo = (html.match(/recordSoloRound\((true|false)\);/g) || []).length;
-check('both solo round ends record a solo game', marksSolo === 2, marksSolo);
+check('every solo round end records a solo game', marksSolo === 3, marksSolo);
 
 
 /* 10. one streak freeze, earned from blackouts */
@@ -250,5 +244,4 @@ check('a 20-ball best moves the target to Turbo', /^Next: Turbo/.test($(lv2, 'le
 const lv3 = boot({'gh.bingo2.daily': JSON.stringify({last: L.dateKey(), streak: 7, best: 7, freezes: 0, days: [], snoozed: ''})});
 check('a 7-day streak shows every speed unlocked', $(lv3, 'levelNext').textContent === 'All speed levels unlocked', $(lv3, 'levelNext').textContent);
 
-console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL SOLO PATTERN CHECKS PASSED');
-process.exit(failures ? 1 : 0);
+process.exit(suite.report('SOLO PATTERN'));

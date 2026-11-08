@@ -1,37 +1,30 @@
-const fs = require('fs');
 const nodeCrypto = require('crypto').webcrypto;
-const { JSDOM } = require('jsdom');
+const { GAME, bootGame , createHarness} = require('./helpers');
 
-const GAME = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+const suite = createHarness();
+const {check, $} = suite;
 
-let failures = 0;
-const check = (name, cond, extra) => {
-  if (cond) console.log('PASS ' + name);
-  else { failures++; console.log('FAIL ' + name + (extra ? ' :: ' + extra : '')); }
-};
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const until = async (fn, ms = 5000) => {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) { if (fn()) return true; await sleep(20); }
   return false;
 };
-const $ = (d, id) => d.getElementById(id);
 
 function boot(html, url, seed) {
-  return new JSDOM(html, {
-    runScripts: 'dangerously',
+  const local = {};
+  if (seed && seed.wallet) local['gh.bingo2.wallet'] = seed.wallet;
+  if (seed && seed.claims) local['gh.bingo2.claims'] = seed.claims;
+  return bootGame({
+    html,
     url,
-    pretendToBeVisual: true,
+    local,
     beforeParse(w) {
       try { Object.defineProperty(w, 'crypto', {value: nodeCrypto, configurable: true}); }
       catch (e) { try { w.crypto.subtle = nodeCrypto.subtle; } catch (e2) {} }
       w.confirm = () => true;
-      w.addEventListener('error', e => { failures++; console.log('PAGE ERROR: ' + (e.message || e.error)); });
-      if (seed) {
-        if (seed.wallet) w.localStorage.setItem('gh.bingo2.wallet', seed.wallet);
-        if (seed.claims) w.localStorage.setItem('gh.bingo2.claims', seed.claims);
-      }
-    }
+    },
+    onError: message => { suite.failures++; console.log('PAGE ERROR: ' + message); }
   });
 }
 
@@ -119,6 +112,5 @@ function boot(html, url, seed) {
   const g5 = boot(GAME, 'https://example.com/bingo-2.html?gift=' + encodeURIComponent(token250)).window;
   check('unpaired copy explains gift links are off', await until(() => /Gift links are off/.test($(g5.document, 'ovTitle').textContent)), $(g5.document, 'ovTitle').textContent);
 
-  console.log(failures ? '\n' + failures + ' FAILURE(S)' : '\nALL GIFT CHECKS PASSED');
-  process.exit(failures ? 1 : 0);
+  process.exit(suite.report('GIFT'));
 })();

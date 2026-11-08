@@ -135,6 +135,28 @@
   font-size: 13px;
 }
 
+/* solo opponents — how many squares each bot still needs */
+.page-bingo2 .solo-bots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.page-bingo2 .solo-bot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid #26314a;
+  border-radius: 999px;
+  background: #0b1220;
+  color: #cbd5e1;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.page-bingo2 .solo-bot b { color: #fde68a; font-variant-numeric: tabular-nums; }
+.page-bingo2 #botCapChip .bot-cap-max { color: #94a3b8; font-size: 10px; font-variant-numeric: tabular-nums; }
+.page-bingo2 #botCapChip.full b { color: #fca5a5; }
+@media (max-width: 620px) {
+  .page-bingo2 .solo-bot { font-size: 10px; padding: 2px 7px; }
+}
+
 .page-bingo2 .bingo-history-wrap { display: flex; align-items: center; gap: 8px; }
 .page-bingo2 .bingo-history-wrap > span { flex: none; color: var(--muted); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
 
@@ -400,6 +422,8 @@ body.page-bingo2.modal-open { overflow: hidden; }
 
 .page-bingo2 .room-pane { display: flex; flex-direction: column; gap: 12px; }
 .page-bingo2 .room-field { display: flex; flex-direction: column; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.page-bingo2 .room-field select:disabled { opacity: .45; cursor: not-allowed; }
+.page-bingo2 .room-field[hidden] { display: none !important; }
 .page-bingo2 .room-field input,
 .page-bingo2 .room-field select,
 .page-bingo2 .chat-form input {
@@ -510,6 +534,7 @@ body.page-bingo2.modal-open { overflow: hidden; }
 .page-bingo2 #createForm[hidden],
 .page-bingo2 #joinForm[hidden],
 .page-bingo2 #overlayAlt[hidden],
+.page-bingo2 #botCapChip[hidden],
 .page-bingo2 #bestChip[hidden],
 .page-bingo2 #winsChip[hidden],
 .page-bingo2 #lobbyWait[hidden],
@@ -519,6 +544,11 @@ body.page-bingo2.modal-open { overflow: hidden; }
 .page-bingo2 #newBtn[hidden],
 .page-bingo2 #soloPatternWrap[hidden],
 .page-bingo2 #soloSpeedWrap[hidden],
+.page-bingo2 #soloBotsWrap[hidden],
+.page-bingo2 #soloSkillSel0Wrap[hidden],
+.page-bingo2 #soloSkillSel1Wrap[hidden],
+.page-bingo2 #soloSkillSel2Wrap[hidden],
+.page-bingo2 #soloBots[hidden],
 .page-bingo2 #soloHintsBtn[hidden],
 .page-bingo2 #roomsBtn[hidden],
 .page-bingo2 #chatUnread[hidden] { display: none !important; }
@@ -1081,6 +1111,7 @@ body.page-bingo2.modal-open { overflow: hidden; }
   letter-spacing: 0;
   text-transform: none;
 }
+.page-bingo2 .solo-pattern select:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 620px) {
   .page-bingo2 .solo-pattern { order: 5; width: calc(50% - 3px); justify-content: space-between; }
   .page-bingo2 .solo-pattern select { flex: 1; max-width: 60%; }
