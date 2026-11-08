@@ -9,10 +9,11 @@ const $ = (d, id) => d.document.getElementById(id);
 function boot(seed) {
   return new JSDOM(GAME, {
     runScripts: 'dangerously',
-    url: 'https://example.com/games/bingo-2.html',
+    url: 'https://example.com/bingo-2.html',
     pretendToBeVisual: true,
     beforeParse(w) {
       if (seed && seed.wallet) w.localStorage.setItem('gh.bingo2.wallet', JSON.stringify(seed.wallet));
+      if (seed && seed.dailyBonus) w.localStorage.setItem('gh.bingo2.dailyBonus', seed.dailyBonus);
       w.addEventListener('error', e => { failures++; console.log('PAGE ERROR: ' + (e.message || e.error)); });
     }
   }).window;
@@ -182,6 +183,118 @@ d23.localStorage.setItem('gh.bingo2.daily', JSON.stringify({last: dayKey(0), str
 restore(d23, freezeCode);
 check('a carried freeze joins a local streak', dayOf(d23).freezes === 1 && dayOf(d23).streak === 3, JSON.stringify(dayOf(d23)));
 check('code length is unchanged by the freeze', /^GH2(-[A-Z2-7]{4}){12}$/.test(freezeCode), freezeCode);
+
+// 11. comeback top-up when the cheapest card is unaffordable
+const emptyWallet = { v: 5, points: 0, solo: { games: 0, wins: 0 }, room: { games: 0, wins: 0, earned: 0, staked: 0 }, updated: 1 };
+const t1 = boot({ wallet: emptyWallet });
+const top1 = $(t1, 'topupBtn');
+check('top-up is offered at zero points', t1.localStorage.getItem('gh.bingo2.topup') === null && !top1.disabled && /Claim 30/.test(top1.textContent), top1.textContent);
+check('top-up explains the safety net', /safety net/.test($(t1, 'topupNote').textContent), $(t1, 'topupNote').textContent);
+top1.click();
+check('top-up credits the wallet', $(t1, 'credits').textContent === '30' && stored(t1).points === 30, $(t1, 'credits').textContent + ' / ' + JSON.stringify(stored(t1)));
+check('top-up records its cooldown', Number(t1.localStorage.getItem('gh.bingo2.topup')) > 0, t1.localStorage.getItem('gh.bingo2.topup'));
+check('top-up disables after claiming', top1.disabled === true, top1.textContent);
+
+const t2 = boot({ wallet: emptyWallet });
+t2.localStorage.setItem('gh.bingo2.topup', String(Date.now()));
+$(t2, 'topupBtn').click();
+check('cooldown blocks a second claim', $(t2, 'credits').textContent === '0', $(t2, 'credits').textContent);
+check('cooldown disables the button', $(t2, 'topupBtn').disabled === true && /available in/.test($(t2, 'topupNote').textContent), $(t2, 'topupNote').textContent);
+const t2b = boot({ wallet: emptyWallet });
+t2b.localStorage.setItem('gh.bingo2.topup', String(Date.now() - 11 * 60 * 1000));
+$(t2b, 'topupBtn').click();
+check('an expired cooldown allows a claim', $(t2b, 'credits').textContent === '30', $(t2b, 'credits').textContent);
+
+const t3 = boot({ wallet: { ...emptyWallet, points: 10 } });
+check('top-up waits until the balance is under 10', $(t3, 'topupBtn').disabled === true, $(t3, 'topupBtn').textContent);
+
+// 12. daily login bonus
+const bonusWallet = { v: 5, points: 1000, solo: { games: 0, wins: 0 }, room: { games: 0, wins: 0, earned: 0, staked: 0 }, updated: 1 };
+const b1 = boot({ wallet: bonusWallet });
+const bonusBtn = $(b1, 'dailyBonusChip');
+check('daily bonus is offered on load', bonusBtn.hidden === false && /Day\s*1\/7\s*·\s*\+50/.test(bonusBtn.textContent), bonusBtn.textContent);
+bonusBtn.click();
+check('daily bonus credits the wallet', $(b1, 'credits').textContent === '1050' && stored(b1).points === 1050, $(b1, 'credits').textContent + ' / ' + JSON.stringify(stored(b1)));
+const b1state = JSON.parse(b1.localStorage.getItem('gh.bingo2.dailyBonus') || '{}');
+check('daily bonus records day 1', b1state.last === dayKey(0) && b1state.streak === 1, JSON.stringify(b1state));
+check('daily bonus hides after claiming', bonusBtn.hidden === true, bonusBtn.hidden);
+const b2 = boot({ wallet: bonusWallet, dailyBonus: dayKey(0) });
+check('a same-day reload does not offer it again', $(b2, 'dailyBonusChip').hidden === true, $(b2, 'dailyBonusChip').hidden);
+const b3 = boot({ wallet: bonusWallet, dailyBonus: dayKey(-1) });
+check('a new day offers the bonus again', $(b3, 'dailyBonusChip').hidden === false, $(b3, 'dailyBonusChip').hidden);
+
+// 13. the ladder advances, peaks, cycles, and forgives one missed day
+const l1 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-1), streak: 1 }) });
+const l1btn = $(l1, 'dailyBonusChip');
+check('day 2 offers the next step', l1btn.hidden === false && /2\/7/.test(l1btn.textContent) && /\+60/.test(l1btn.textContent), l1btn.textContent);
+l1btn.click();
+const l1state = JSON.parse(l1.localStorage.getItem('gh.bingo2.dailyBonus') || '{}');
+check('day 2 credits 60 and advances the streak', $(l1, 'credits').textContent === '1060' && l1state.streak === 2, $(l1, 'credits').textContent + ' / ' + JSON.stringify(l1state));
+const l2 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-1), streak: 6 }) });
+check('day 7 shows the peak reward', /7\/7/.test($(l2, 'dailyBonusChip').textContent) && /\+200/.test($(l2, 'dailyBonusChip').textContent), $(l2, 'dailyBonusChip').textContent);
+$(l2, 'dailyBonusChip').click();
+check('day 7 credits 200', $(l2, 'credits').textContent === '1200', $(l2, 'credits').textContent);
+const l3 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-1), streak: 7 }) });
+check('a new cycle starts after day 7', /1\/7/.test($(l3, 'dailyBonusChip').textContent) && /\+50/.test($(l3, 'dailyBonusChip').textContent), $(l3, 'dailyBonusChip').textContent);
+const l4 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-2), streak: 4 }) });
+check('one missed day keeps the ladder', /5\/7/.test($(l4, 'dailyBonusChip').textContent) && /\+120/.test($(l4, 'dailyBonusChip').textContent), $(l4, 'dailyBonusChip').textContent);
+$(l4, 'dailyBonusChip').click();
+const l4state = JSON.parse(l4.localStorage.getItem('gh.bingo2.dailyBonus') || '{}');
+check('the grace claim resumes at the preserved step', $(l4, 'credits').textContent === '1120' && l4state.streak === 5, $(l4, 'credits').textContent + ' / ' + JSON.stringify(l4state));
+const l5 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-3), streak: 4 }) });
+check('two missed days restart the ladder', /1\/7/.test($(l5, 'dailyBonusChip').textContent) && /\+50/.test($(l5, 'dailyBonusChip').textContent), $(l5, 'dailyBonusChip').textContent);
+
+// 14. the points panel previews the seven-day ladder
+const p1 = boot({ wallet: bonusWallet });
+const p1cells = [...$(p1, 'walletLadderDays').querySelectorAll('li')];
+check('the points panel lists all seven login days', p1cells.length === 7, p1cells.length);
+check('the preview shows the seven rewards', p1cells.map(li => li.querySelector('b').textContent).join(',') === '+50,+60,+75,+95,+120,+150,+200', p1cells.map(li => li.querySelector('b').textContent).join(','));
+check('the preview highlights the next login', $(p1, 'walletLadderNext').textContent === 'Next: Day 1 · +50' && p1cells[0].classList.contains('is-next') && !p1cells[0].classList.contains('is-done'), $(p1, 'walletLadderNext').textContent);
+const p2 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-1), streak: 2 }) });
+const p2cells = [...$(p2, 'walletLadderDays').querySelectorAll('li')];
+check('the preview advances to day 3', $(p2, 'walletLadderNext').textContent === 'Next: Day 3 · +75' && p2cells[2].classList.contains('is-next') && p2cells[0].classList.contains('is-done') && p2cells[1].classList.contains('is-done'), $(p2, 'walletLadderNext').textContent);
+const p3 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(0), streak: 3 }) });
+const p3cells = [...$(p3, 'walletLadderDays').querySelectorAll('li')];
+check('after claiming, the preview points at tomorrow', $(p3, 'walletLadderNext').textContent === 'Tomorrow: Day 4 · +95' && p3cells[3].classList.contains('is-next') && p3cells[2].classList.contains('is-done'), $(p3, 'walletLadderNext').textContent);
+const p4 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(0), streak: 7 }) });
+const p4cells = [...$(p4, 'walletLadderDays').querySelectorAll('li')];
+check('the preview starts a new cycle at day 1', $(p4, 'walletLadderNext').textContent === 'Tomorrow: Day 1 · +50' && p4cells[0].classList.contains('is-next') && !p4cells[0].classList.contains('is-done'), $(p4, 'walletLadderNext').textContent);
+const p5 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-2), streak: 4 }) });
+const p5cells = [...$(p5, 'walletLadderDays').querySelectorAll('li')];
+check('one missed day keeps the preview progress', $(p5, 'walletLadderNext').textContent === 'Grace: Day 5 · +120' && p5cells[4].classList.contains('is-next') && p5cells.slice(0, 4).every(li => li.classList.contains('is-done')), $(p5, 'walletLadderNext').textContent);
+const p5b = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-3), streak: 4 }) });
+const p5bcells = [...$(p5b, 'walletLadderDays').querySelectorAll('li')];
+check('two missed days clear the preview progress', $(p5b, 'walletLadderNext').textContent === 'Next: Day 1 · +50' && p5bcells.every(li => !li.classList.contains('is-done')), $(p5b, 'walletLadderNext').textContent);
+const p6 = boot({ wallet: bonusWallet });
+$(p6, 'dailyBonusChip').click();
+const p6cells = [...$(p6, 'walletLadderDays').querySelectorAll('li')];
+check('claiming updates the points-panel preview', $(p6, 'walletLadderNext').textContent === 'Tomorrow: Day 2 · +60' && p6cells[0].classList.contains('is-done') && p6cells[1].classList.contains('is-next'), $(p6, 'walletLadderNext').textContent);
+
+// 15. the compact HUD preview
+const h1 = boot({ wallet: bonusWallet });
+const hud1 = $(h1, 'hudLadder');
+const h1cells = [...$(h1, 'hudLadderDays').querySelectorAll('li')];
+check('the HUD preview is visible and lists seven days', hud1.hidden === false && h1cells.length === 7, hud1.hidden + ' / ' + h1cells.length);
+check('the HUD preview shows the seven rewards', h1cells.map(li => li.querySelector('b').textContent).join(',') === '+50,+60,+75,+95,+120,+150,+200', h1cells.map(li => li.querySelector('b').textContent).join(','));
+check('the HUD preview highlights the next reward', h1cells[0].classList.contains('is-next') && !h1cells[0].classList.contains('is-done') && /Next: day 1, plus 50 points/.test(hud1.getAttribute('aria-label')), hud1.getAttribute('aria-label'));
+const h2 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-1), streak: 2 }) });
+const h2cells = [...$(h2, 'hudLadderDays').querySelectorAll('li')];
+check('the HUD preview advances to day 3', h2cells[2].classList.contains('is-next') && h2cells[0].classList.contains('is-done') && h2cells[1].classList.contains('is-done') && /Next: day 3, plus 75 points/.test($(h2, 'hudLadder').getAttribute('aria-label')), $(h2, 'hudLadder').getAttribute('aria-label'));
+const h3 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(0), streak: 3 }) });
+const h3cells = [...$(h3, 'hudLadderDays').querySelectorAll('li')];
+check('after claiming, the HUD preview points at tomorrow and stays visible', $(h3, 'hudLadder').hidden === false && h3cells[3].classList.contains('is-next') && h3cells[2].classList.contains('is-done') && /Tomorrow: day 4, plus 95 points/.test($(h3, 'hudLadder').getAttribute('aria-label')), $(h3, 'hudLadder').getAttribute('aria-label'));
+const h4 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(0), streak: 7 }) });
+const h4cells = [...$(h4, 'hudLadderDays').querySelectorAll('li')];
+check('the HUD preview starts a new cycle at day 1', h4cells[0].classList.contains('is-next') && !h4cells[0].classList.contains('is-done') && /Tomorrow: day 1, plus 50 points/.test($(h4, 'hudLadder').getAttribute('aria-label')), $(h4, 'hudLadder').getAttribute('aria-label'));
+const h5 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-2), streak: 4 }) });
+const h5cells = [...$(h5, 'hudLadderDays').querySelectorAll('li')];
+check('one missed day keeps the HUD preview progress', $(h5, 'hudLadder').hidden === false && h5cells.slice(0, 4).every(li => li.classList.contains('is-done')) && h5cells[4].classList.contains('is-next') && /One missed day forgiven\. Next: day 5, plus 120 points/.test($(h5, 'hudLadder').getAttribute('aria-label')), $(h5, 'hudLadder').getAttribute('aria-label'));
+$(h5, 'dailyBonusChip').click();
+const h5after = [...$(h5, 'hudLadderDays').querySelectorAll('li')];
+check('the grace claim refreshes the HUD preview', h5after.slice(0, 5).every(li => li.classList.contains('is-done')) && h5after[5].classList.contains('is-next') && /Tomorrow: day 6, plus 150 points/.test($(h5, 'hudLadder').getAttribute('aria-label')), $(h5, 'hudLadder').getAttribute('aria-label'));
+const h6 = boot({ wallet: bonusWallet, dailyBonus: JSON.stringify({ last: dayKey(-3), streak: 4 }) });
+const h6cells = [...$(h6, 'hudLadderDays').querySelectorAll('li')];
+check('two missed days clear the HUD preview progress', $(h6, 'hudLadder').hidden === false && h6cells.every(li => !li.classList.contains('is-done')) && h6cells[0].classList.contains('is-next'), $(h6, 'hudLadder').getAttribute('aria-label'));
 
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL WALLET CHECKS PASSED');
 process.exit(failures ? 1 : 0);

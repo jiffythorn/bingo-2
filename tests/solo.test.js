@@ -9,7 +9,7 @@ const $ = (w, id) => w.document.getElementById(id);
 function boot(seed) {
   return new JSDOM(html, {
     runScripts: 'dangerously',
-    url: 'https://example.com/games/bingo-2.html',
+    url: 'https://example.com/bingo-2.html',
     pretendToBeVisual: true,
     beforeParse(w) {
       Object.entries(seed || {}).forEach(([k, v]) => w.localStorage.setItem(k, v));
@@ -241,6 +241,14 @@ $(p1, 'freezePlayBtn').click();
 check('button mirrors the selection once today is chosen', $(p1, 'freezePlayBtn').textContent === '✓ Today selected' && $(p1, 'freezePlayBtn').disabled, $(p1, 'freezePlayBtn').textContent + '/' + $(p1, 'freezePlayBtn').disabled);
 check('selecting today did not hide the reminder', !$(p1, 'freezeReminder').hidden, $(p1, 'freezeReminder').hidden);
 check('selection took effect in the picker', $(p1, 'soloPatternSel').value === p1.__logic.dailyPatternKey(), $(p1, 'soloPatternSel').value);
+
+/* 15. the next locked level's target stays beside the picker */
+const lv1 = boot({});
+check('next-level note starts on Fast', /^Next: Fast/.test($(lv1, 'levelNext').textContent) && /24-ball/.test($(lv1, 'levelNext').textContent), $(lv1, 'levelNext').textContent);
+const lv2 = boot({'gh.bingo2.best.line': '20'});
+check('a 20-ball best moves the target to Turbo', /^Next: Turbo/.test($(lv2, 'levelNext').textContent) && /16-ball/.test($(lv2, 'levelNext').textContent), $(lv2, 'levelNext').textContent);
+const lv3 = boot({'gh.bingo2.daily': JSON.stringify({last: L.dateKey(), streak: 7, best: 7, freezes: 0, days: [], snoozed: ''})});
+check('a 7-day streak shows every speed unlocked', $(lv3, 'levelNext').textContent === 'All speed levels unlocked', $(lv3, 'levelNext').textContent);
 
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL SOLO PATTERN CHECKS PASSED');
 process.exit(failures ? 1 : 0);

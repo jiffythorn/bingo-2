@@ -5,7 +5,7 @@ const inject = '  window.__logic = {PATTERNS, findWin, makeCard, cardFromNumbers
 html = html.replace('})();\n</script>', inject);
 if (!html.includes('__logic')) { console.log('FAIL could not inject logic hook'); process.exit(1); }
 
-const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.com/games/bingo-2.html', pretendToBeVisual: true });
+const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://example.com/bingo-2.html', pretendToBeVisual: true });
 const w = dom.window;
 const L = w.__logic;
 let failures = 0;

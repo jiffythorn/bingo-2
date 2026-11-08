@@ -2,7 +2,7 @@ const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
 const HTML = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
-const PAGE_URL = 'https://example.com/games/bingo-2.html';
+const PAGE_URL = 'https://example.com/bingo-2.html';
 
 let failures = 0;
 const check = (name, cond, extra) => {

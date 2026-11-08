@@ -35,13 +35,18 @@ friends and bots. No build step, no server, no accounts.
   any line, four corners, X, T, H, climbing ladder, bullseye, blackout.
 - Solo: pick any pattern (or today's), start calling, daub by tapping. Per
   pattern best scores, with the old single best migrated to "any line".
-- Rooms: host picks pattern, pace, card cost and cards per player; up to three
+- Rooms: host picks pattern, pace (a preset or custom seconds per ball), card cost and cards per player; up to three
   labelled smart bots; in-room and lobby chat; invite links with a 5-character
   code; host-authoritative rounds.
 - Points economy: card costs feed the pot, 6% table fee, payouts 55/25/12,
   leftover rolls into a bonus pot that pays a fast bingo then resets. Bots pay
-  the card cost but never collect. Everything is score tokens with no cash
-  value (see `terms.html`).
+  the card cost but never collect. A comeback top-up grants 30 points when the
+  balance is under 10, once every 10 minutes, and a claimable daily login ladder
+  climbs from 50 to 200 points across seven consecutive days, then cycles; a
+  single missed day is forgiven, while two in a row restart at day 1. The
+  compact HUD ladder and the Your points panel preview the whole ladder with
+  the next claim highlighted (solo is always free). Everything is
+  score tokens with no cash value (see `terms.html`).
 
 ### Records and standings
 
@@ -106,6 +111,8 @@ Key pieces:
 | Key | Contents |
 | --- | --- |
 | `gh.bingo2.wallet` | `{v:5, points, solo:{games,wins}, room:{games,wins,earned,staked}, updated}` |
+| `gh.bingo2.topup` | Last comeback top-up timestamp (10-minute cooldown) |
+| `gh.bingo2.dailyBonus` | Daily login ladder state (`{last, streak}`; legacy date strings migrate) |
 | `gh.bingo2.daily` | `{last, streak, best, freezes, days:[{d,t}], snoozed}` |
 | `gh.bingo2.best.<pattern>` | best ball count per pattern |
 | `gh.bingo2.soloPattern` | last solo pattern choice |
@@ -149,7 +156,7 @@ recorded in `gh.bingo2.claims` so a code cannot be reused on the same browser.
 
 - `node --check` on the extracted script: clean.
 - Logic suites (JSDOM) run with `npm test`: patterns **69** checks, wallet and
-  restore codes **50**, solo + daily + freeze + history + reminder **75**, gift
+  restore codes **62**, solo + daily + freeze + history + reminder **75**, gift
   tokens **22**, rooms **27** — five suites, all passing and stable across
   repeated runs.
 - Published page checked at the Pages URL: HTML, both stylesheets, terms and the
@@ -247,5 +254,4 @@ locally produces the same bytes.
   ops repo?
 - Do rooms need to survive a host disconnect, or is "host closes, room ends"
   acceptable for a casual game?
-- Is a custom domain wanted, and should the hub keep linking to its own copy or
-  hand over to this repo as canonical?
+- Is a custom domain wanted?

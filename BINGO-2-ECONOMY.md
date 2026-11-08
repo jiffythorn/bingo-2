@@ -7,7 +7,10 @@
 > travels with the player via the restore code. Nothing can be bought, sold or
 > redeemed, and no real money is involved anywhere.
 
-Research + design proposal, 2026-11-07. **Nothing here is implemented yet.**
+Research + design proposal, 2026-11-07. The wallet, pot, restore codes, gift
+codes, the broke top-up and the claimable seven-day login ladder are
+implemented; the sync, album, event and grant-operations sections remain
+proposals.
 
 Goal: work out how the games people spend money on actually structure
 credits, pots and return visits, then decide what fits a static, no-account,
@@ -283,7 +286,7 @@ table playing instead of churning after the first line.
 | Jackpot seed | 10 × stake | resets to seed after a payout |
 | Jackpot trigger | bingo ≤ 12 calls (line) / ≤ 20 (corners) / ≤ 52 (blackout) | Wink's model; tighten to taste |
 | Broke top-up | 3 × minimum stake, 10-min cooldown | always claimable, never scaled to your old balance |
-| Daily ladder | 7 days: 25/40/60/90/130/180/**400** | day-7 peak, forgiveness on a miss |
+| Daily ladder | 7 days: 25/40/60/90/130/180/**400** | shipped as 50/60/75/95/120/150/**200**; cycles after day 7, one missed day is forgiven and two in a row restart at day 1 |
 
 Sinks: rake, cosmetics, extra cards, jackpot seeding. Faucets: daily ladder,
 top-up, bot contributions (§4.4), album completion (funded from rake).
@@ -352,7 +355,7 @@ not by what the currency is called.
 
 | Model | UK | US | EU | Verdict |
 |---|---|---|---|---|
-| **A. Free coins, free entry, in-game prizes, no transfer, no rake of value** | not gambling, no licence | fine; de minimis everywhere | fine | **this is Game Hub** |
+| **A. Free coins, free entry, in-game prizes, no transfer, no rake of value** | not gambling, no licence | fine; de minimis everywhere | fine | **this is Bingo 2** |
 | **B. Sold coins, in-game prizes only, no transfer** | no licence, but consumer law + PEGI 16/18 | lawful in most states, **presumptively illegal in Washington** | Netherlands/Belgium risky | the social-casino model |
 | **C. Sold coins + any redemption** | remote bingo/casino licence | licensed online bingo exists almost nowhere | licence | don't |
 | **D. Pot + rake over purchased coins** | casino licence; the rake defeats exempt gaming | the rake is the pleaded illegality | licence + PSD2 review | don't |
@@ -599,7 +602,7 @@ flyer has to work in a school hall with no wifi.
 
 ```
 GH2G.<v>.<role>.<payload>.<sig>
-payload = base64url({a: amount, i: id, e: expiryEpoch, n?: label})
+payload = base64url({c: amount, r: role, e: expiryEpoch, i: issueId, n: nonce})
 sig     = ECDSA P-256 / SHA-256 over "<v>.<role>.<payload>"
 ```
 
@@ -676,8 +679,8 @@ stopped.
 
 | Phase | Work | Files | Risk |
 |---|---|---|---|
-| **P1 — Wallet + pot** | `credits` on each seat, lobby stake/cards selects, host debit + pot, call budget, ranked payouts, pot ticker, end-of-round payout panel, wallet module + restore code (§6.2) | `games/bingo-2.html`, `bingo-2.css`, `style.css` (HUD chips) | medium: touches `hostStartRound`, `endRoomRound`, `hostOnData`, `guestOnData` |
-| **P1.5 — Grants** | signed grant tokens, `?gift=` auto-claim, redeem field, local claim ledger, welcome pack, host tip, `tools/mint.html` + builder exclude | `games/bingo-2.html`, `bingo-2.css`, `tools/mint.html`, `scripts/build_downloads.py` | low, but needs the wallet first |
+| **P1 — Wallet + pot** | `credits` on each seat, lobby stake/cards selects, host debit + pot, call budget, ranked payouts, pot ticker, end-of-round payout panel, wallet module + restore code (§6.2) | `index.html`, `bingo-2.css`, `style.css` (HUD chips) | medium: touches `hostStartRound`, `endRoomRound`, `hostOnData`, `guestOnData` |
+| **P1.5 — Grants** | signed grant tokens, `?gift=` auto-claim, redeem field, local claim ledger, welcome pack, host tip, `tools/mint.html` + builder exclude | `index.html`, `bingo-2.css`, `tools/mint.html`, `scripts/build-zip.py` | low, but needs the wallet first |
 | **P2 — Jackpot** | Seed/contribution/reset, trigger by call count, room-bar ticker, rollover across rounds | above | low |
 | **P3 — Bankroll guardrails** | Daily ladder, broke top-up, `gh.bingo2.econ` persistence, HUD chips | above | low |
 | **P4 — Daily Table** | Seeded PRNG from date, fixed 5-round run, score + share string, local history | above | low, self-contained |
@@ -685,20 +688,18 @@ stopped.
 | **P6 — Reactions + polish** | Chat emote row, "next round" in the end overlay, mobile pass | above | low |
 
 Every phase ends with `node --check` on the extracted script,
-`python3 scripts/build_downloads.py`, and a jsdom click-through — the same
-harness described in `PLAN.md` (ad hoc, recreate it in `/tmp`).
+`python3 scripts/build-zip.py`, and a jsdom click-through — the same harness
+the repo's `tests/` suites use.
 
 ### Open questions for the owner
 
 1. Call budget + multiple bingos (recommended, Blitz-like) or keep "first line
    wins" as the default and treat the budget as a separate room mode?
-2. Should the daily ladder and album be shared between Bingo and Bingo 2, or
-   stay separate like the saved names?
-3. Do we want the High Roller table at all on a site aimed at casual players?
+2. Do we want the High Roller table at all on a site aimed at casual players?
    It only matters if the stake ladder is what makes the pot feel real.
-4. Is a "Nightly link game" worth a shared wall clock, or is the Daily Table
+3. Is a "Nightly link game" worth a shared wall clock, or is the Daily Table
    enough of an appointment?
-5. Grants: are signed tokens enough, or do we stand up the little Worker so a
+4. Grants: are signed tokens enough, or do we stand up the little Worker so a
    leaked promo code can be revoked and single-use is actually enforced?
 
 ---

@@ -22,7 +22,7 @@ npm test
 Notes:
 
 - `gift.test.js` signs tokens with a throwaway ES256 key generated at run time
-  and patches the game copy's `GRANT_KEY`, so the ops minter (`tools/mint.html`
-  in the hub) is not required and no real key is used.
+  and patches the game copy's `GRANT_KEY`, so the ops minter is not required
+  and no real key is used.
 - `rooms.test.js` installs a virtual clock, so it does not wait in real time.
 - The minter UI itself is not tested here: that tool is not part of this repo.

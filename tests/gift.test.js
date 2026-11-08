@@ -54,7 +54,7 @@ function boot(html, url, seed) {
   check('game copy now carries the key', PAIRED !== GAME && PAIRED.includes('const GRANT_KEY = {'));
 
   /* gift link */
-  const g1 = boot(PAIRED, 'https://example.com/games/bingo-2.html?gift=' + encodeURIComponent(token600)).window;
+  const g1 = boot(PAIRED, 'https://example.com/bingo-2.html?gift=' + encodeURIComponent(token600)).window;
   const gd1 = g1.document;
   check('gift link offers the redeem overlay', await until(() => /A gift is waiting/.test($(gd1, 'ovTitle').textContent)), $(gd1, 'ovTitle').textContent);
   check('overlay states the amount', /600 points/.test($(gd1, 'ovText').textContent), $(gd1, 'ovText').textContent);
@@ -69,13 +69,13 @@ function boot(html, url, seed) {
   check('receipt overlay shown', await until(() => /Gift redeemed/.test($(gd1, 'ovTitle').textContent)), $(gd1, 'ovTitle').textContent);
 
   /* same browser (seeded storage), same link again */
-  const g2 = boot(PAIRED, 'https://example.com/games/bingo-2.html?gift=' + encodeURIComponent(token600), {wallet: walletJson, claims: claimsJson}).window;
+  const g2 = boot(PAIRED, 'https://example.com/bingo-2.html?gift=' + encodeURIComponent(token600), {wallet: walletJson, claims: claimsJson}).window;
   const gd2 = g2.document;
   check('second use refused', await until(() => /Gift already used/.test($(gd2, 'ovTitle').textContent)), $(gd2, 'ovTitle').textContent);
   check('balance unchanged by the second use', $(gd2, 'credits').textContent === '1600', $(gd2, 'credits').textContent);
 
   /* manual redeem field on a fresh wallet */
-  const g3 = boot(PAIRED, 'https://example.com/games/bingo-2.html').window;
+  const g3 = boot(PAIRED, 'https://example.com/bingo-2.html').window;
   const gd3 = g3.document;
   $(gd3, 'giftInput').value = token250;
   $(gd3, 'giftRedeemBtn').click();
@@ -110,13 +110,13 @@ function boot(html, url, seed) {
   check('prize at its cap is accepted', await until(() => $(gd3, 'credits').textContent === '26250'), $(gd3, 'credits').textContent);
 
   /* unpaired copy */
-  const g4 = boot(GAME, 'https://example.com/games/bingo-2.html').window;
+  const g4 = boot(GAME, 'https://example.com/bingo-2.html').window;
   const gd4 = g4.document;
   $(gd4, 'giftInput').value = token250;
   $(gd4, 'giftRedeemBtn').click();
   check('unpaired copy refuses codes', await until(() => /no grant key configured/.test($(gd4, 'giftResult').textContent)), $(gd4, 'giftResult').textContent);
 
-  const g5 = boot(GAME, 'https://example.com/games/bingo-2.html?gift=' + encodeURIComponent(token250)).window;
+  const g5 = boot(GAME, 'https://example.com/bingo-2.html?gift=' + encodeURIComponent(token250)).window;
   check('unpaired copy explains gift links are off', await until(() => /Gift links are off/.test($(g5.document, 'ovTitle').textContent)), $(g5.document, 'ovTitle').textContent);
 
   console.log(failures ? '\n' + failures + ' FAILURE(S)' : '\nALL GIFT CHECKS PASSED');

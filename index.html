@@ -31,8 +31,18 @@
       <label class="solo-pattern" id="soloPatternWrap">Pattern
         <select id="soloPatternSel" aria-label="Solo winning pattern"></select>
       </label>
+      <label class="solo-pattern" id="soloSpeedWrap">Level
+        <select id="soloSpeedSel" aria-label="Solo draw speed">
+          <option value="relaxed">1 · Relaxed</option>
+          <option value="classic" selected>2 · Classic</option>
+          <option value="fast">3 · Fast</option>
+          <option value="turbo">4 · Turbo</option>
+        </select>
+      </label>
+      <div class="level-next" id="levelNext" aria-live="polite"></div>
       <button class="btn btn-ghost btn-sm daily-chip" id="dailyBtn" type="button" title="Play today's pattern">🎯 Today · <b id="dailyName">—</b></button>
       <button class="btn btn-ghost btn-sm" id="newBtn">↻ New card</button>
+      <button class="btn btn-ghost btn-sm" id="soloHintsBtn" type="button" aria-pressed="false" title="Mark called numbers on your solo card">💡 Hints off</button>
       <button class="btn btn-primary btn-sm" id="roomsBtn">🌐 Rooms</button>
     </div>
   </div>
@@ -40,7 +50,13 @@
   <div class="hud">
     <div class="chip on">Balls <b id="balls">0</b></div>
     <div class="chip">Last <b id="last">—</b></div>
-    <div class="chip" id="creditsChip">Points <b id="credits">1000</b></div>
+    <div class="chip" id="creditsChip">Points <b id="credits">1000</b>
+      <button class="chip-btn" id="dailyBonusChip" type="button" hidden title="Claim today's login bonus">🎁 <span class="bonus-word">Day </span><span id="bonusDay">1</span>/7 · +<span id="bonusAmount">50</span></button>
+    </div>
+    <div class="chip hud-ladder" id="hudLadder" hidden>
+      <span class="hud-ladder-label" aria-hidden="true">🎁</span>
+      <ol class="hud-ladder-days" id="hudLadderDays" aria-label="Seven-day daily login rewards"></ol>
+    </div>
     <div class="chip" id="potChip" hidden>Pot <b id="pot">0</b></div>
     <div class="chip" id="bestChip">Best <b id="best">—</b></div>
     <div class="chip" id="streakChip" hidden>🔥 Streak <b id="streak">0</b><span id="freezeTag" hidden title="Streak freeze ready — covers one missed day">❄</span></div>
@@ -97,14 +113,14 @@
     <div class="overlay show" id="overlay">
       <div class="ov-ico" id="ovIco">🎱</div>
       <h2 id="ovTitle">Bingo night</h2>
-      <p id="ovText">A new ball drops every 1.2 seconds. Tap the numbers on your card to daub them — the first full row, column or diagonal wins.</p>
+      <p id="ovText">A new ball drops at the level you pick. Tap the numbers on your card to daub them — the first full row, column or diagonal wins.</p>
       <button class="btn btn-primary" id="startBtn">▶ Start calling</button>
       <button class="btn btn-ghost" id="overlayAlt" type="button" hidden></button>
     </div>
   </div>
 
   <div class="controls-hint">
-    <span>Tap called numbers to daub them</span>
+    <span>Tap called numbers on your card to daub them</span>
     <span><kbd>N</kbd> new card</span>
     <span>Solo: pick any pattern · Rooms: host sets it</span>
     <span>Points are score tokens — no cash value</span>
@@ -162,7 +178,11 @@
               <option value="chill">Chill · 1.7s</option>
               <option value="classic" selected>Classic · 1.2s</option>
               <option value="fast">Fast · 0.8s</option>
+              <option value="custom">Custom…</option>
             </select>
+          </label>
+          <label class="room-field" id="customPaceWrap" hidden>Seconds per ball
+            <input id="customPace" type="number" min="0.4" max="5" step="0.1" inputmode="decimal" value="1.2">
           </label>
           <label class="room-field">Table
             <select id="tableSel">
@@ -186,6 +206,12 @@
               <option value="1">1 bot</option>
               <option value="2">2 bots</option>
               <option value="3">3 bots</option>
+            </select>
+          </label>
+          <label class="room-field">Card hints
+            <select id="hintsSel">
+              <option value="0" selected>Off · find them yourself</option>
+              <option value="1">On · cyan called marks</option>
             </select>
           </label>
         </div>
@@ -230,6 +256,11 @@
               <select id="lobbyPattern">
                 <option value="line">Any line</option>
                 <option value="corners">Four corners</option>
+                <option value="x">X · both diagonals</option>
+                <option value="t">T · top row + middle column</option>
+                <option value="h">H · side columns + middle row</option>
+                <option value="ladder">Climb the ladder</option>
+                <option value="bullseye">Bullseye</option>
                 <option value="blackout">Blackout</option>
               </select>
             </label>
@@ -238,7 +269,11 @@
                 <option value="chill">Chill</option>
                 <option value="classic">Classic</option>
                 <option value="fast">Fast</option>
+                <option value="custom">Custom…</option>
               </select>
+            </label>
+            <label class="room-field" id="lobbyCustomPaceWrap" hidden>Seconds per ball
+              <input id="lobbyCustomPace" type="number" min="0.4" max="5" step="0.1" inputmode="decimal" value="1.2">
             </label>
             <label class="room-field">Bots
               <select id="lobbyBots">
@@ -246,6 +281,12 @@
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
+              </select>
+            </label>
+            <label class="room-field">Hints
+              <select id="lobbyHints">
+                <option value="0">Off · find them</option>
+                <option value="1">Cyan marks</option>
               </select>
             </label>
             <label class="room-field">Table
@@ -293,9 +334,21 @@
         <span>👛 Your points</span>
         <strong><span id="walletCredits">1,000</span> points</strong>
       </div>
+      <div class="wallet-ladder" id="walletLadder">
+        <div class="wallet-ladder-head">
+          <span>🎁 Daily login</span>
+          <b id="walletLadderNext" aria-live="polite">Next: Day 1 · +50</b>
+        </div>
+        <ol class="wallet-ladder-days" id="walletLadderDays" aria-label="Seven-day daily login rewards"></ol>
+        <p class="wallet-note wallet-ladder-note">Claim on consecutive days; one missed day is forgiven, but two in a row restart at day 1.</p>
+      </div>
       <div class="wallet-actions">
         <button class="btn btn-ghost btn-sm" id="walletCopy" type="button">📋 Copy restore code</button>
         <button class="btn btn-ghost btn-sm" id="walletRestoreBtn" type="button">↺ Restore code</button>
+      </div>
+      <div class="wallet-topup">
+        <button class="btn btn-primary btn-sm" id="topupBtn" type="button" disabled>🎁 Comeback top-up</button>
+        <p class="wallet-note" id="topupNote">Unlocks under 10 points: +30 to get back to a table.</p>
       </div>
       <div class="wallet-record">
         <div class="record-section">
@@ -348,6 +401,8 @@
         <li>The pot pays the top three bingos (55 / 25 / 12); whatever is left rolls into the bonus pot, which pays a fast bingo and then resets.</li>
         <li>Bots pay the card cost like everyone else but <b>never collect their winnings</b> — their share goes to the bonus pot.</li>
         <li>Your record — games played, games won, points earned — is your leaderboard standing, and the restore code carries it to another device.</li>
+        <li>If you are under 10 points, the wallet offers a <b>+30 comeback top-up</b> every 10 minutes. Solo is always free, so you can keep playing while you wait.</li>
+        <li>A <b>daily login ladder</b> adds more each day (50 → 60 → 75 → 95 → 120 → 150 → 200) — claim it from the 🎁 chip. The ladder beside the Points chip and the Your points panel preview all seven rewards and highlight the next one. One missed day is forgiven; two in a row restart at day 1, and the ladder cycles after day 7.</li>
       </ul>
       <p class="econ-link"><a href="terms.html#points">No cash value — read the terms</a></p>
     </details>
@@ -371,6 +426,8 @@
   const freezeReminder = $('freezeReminder'), freezeReminderText = $('freezeReminderText');
   const freezeSnoozeBtn = $('freezeSnoozeBtn');
   const creditsEl = $('credits'), potEl = $('pot'), creditsChip = $('creditsChip'), potChip = $('potChip');
+  const dailyBonusChip = $('dailyBonusChip'), bonusDayEl = $('bonusDay'), bonusAmountEl = $('bonusAmount');
+  const hudLadder = $('hudLadder'), hudLadderDays = $('hudLadderDays');
   const cardTabsEl = $('cardTabs'), jackpotEl = $('roomJackpot'), jackpotAmtEl = $('jackpotAmt');
   const lobbyPot = $('lobbyPot');
   const newBtn = $('newBtn'), roomsBtn = $('roomsBtn');
@@ -383,6 +440,7 @@
   const hostSettings = $('hostSettings'), guestSettings = $('guestSettings');
   const startRoomBtn = $('startRoomBtn'), lobbyWait = $('lobbyWait'), lobbyChat = $('lobbyChat');
   const walletCreditsEl = $('walletCredits'), walletCopyBtn = $('walletCopy');
+  const walletLadderNext = $('walletLadderNext'), walletLadderDays = $('walletLadderDays');
   const walletRestoreBtn = $('walletRestoreBtn'), walletRestore = $('walletRestore');
   const walletNote = $('walletNote'), walletCodeOut = $('walletCodeOut');
   const walletCodeInput = $('walletCodeInput'), walletPreview = $('walletPreview');
@@ -430,6 +488,13 @@
   const resolvePatternSelection = v => (v === 'daily' ? dailyPatternKey() : (v in PATTERNS ? v : 'line'));
   const PACES = {chill: 1700, classic: 1200, fast: 800};
   const PACE_LABELS = {chill: 'Chill', classic: 'Classic', fast: 'Fast'};
+  const PACE_MIN = 400, PACE_MAX = 5000;
+  const SOLO_LEVELS = {relaxed: 2000, classic: 1200, fast: 800, turbo: 500};
+  const SOLO_LEVEL_LABELS = {relaxed: '1 · Relaxed', classic: '2 · Classic', fast: '3 · Fast', turbo: '4 · Turbo'};
+  const LEVEL_GATES = {
+    fast: {balls: 24, streak: 3, text: 'win a pattern in 24 balls or fewer, or reach a 3-day streak'},
+    turbo: {balls: 16, streak: 7, text: 'win a pattern in 16 balls or fewer, or reach a 7-day streak'}
+  };
   const BOT_NAMES = ['Rex', 'Nova', 'Pip'];
   const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const MAX_PLAYERS = 8;
@@ -444,6 +509,26 @@
   const JACKPOT_CONTRIB = 0.05;   // extra slice of every entry fee
   const JACKPOT_SEED_MULT = 10;   // seed = 10 x the per-card cost
   const PAYOUT_SPLIT = [0.55, 0.25, 0.12];
+  const TOPUP_AMOUNT = 30;              // 3 x the cheapest paid card (Bronze, 10)
+  const TOPUP_UNDER = 10;               // only when the cheapest table is unaffordable
+  const TOPUP_COOLDOWN = 10 * 60 * 1000;
+  const TOPUP_KEY = 'gh.bingo2.topup';
+  const DAILY_BONUS_LADDER = [50, 60, 75, 95, 120, 150, 200]; // day 1 → day 7
+  const DAILY_BONUS_KEY = 'gh.bingo2.dailyBonus';
+  const readDailyBonusState = () => {
+    try {
+      const raw = localStorage.getItem(DAILY_BONUS_KEY);
+      if (!raw) return {last: '', streak: 0};
+      /* the first release stored a bare date; treat it as day 1 */
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return {last: raw, streak: 1};
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return {last: '', streak: 0};
+      return {
+        last: typeof obj.last === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.last) ? obj.last : '',
+        streak: Math.max(0, Math.min(7, Math.floor(Number(obj.streak) || 0)))
+      };
+    } catch (e) { return {last: '', streak: 0}; }
+  };
 
   const SOLO_PATTERN_KEY = 'gh.bingo2.soloPattern';
   const DAILY_KEY = 'gh.bingo2.daily';
@@ -451,6 +536,14 @@
     const saved = localStorage.getItem(SOLO_PATTERN_KEY);
     return saved && saved in PATTERNS ? saved : dailyPatternKey();
   })();
+  const SOLO_LEVEL_KEY = 'gh.bingo2.soloLevel';
+  let soloLevel = (() => {
+    const saved = localStorage.getItem(SOLO_LEVEL_KEY);
+    return saved && saved in SOLO_LEVELS ? saved : 'classic';
+  })();
+  const SOLO_HINTS_KEY = 'gh.bingo2.soloHints';
+  let soloHints = localStorage.getItem(SOLO_HINTS_KEY) === '1';
+  const SOLO_UNLOCK_KEY = 'gh.bingo2.unlockedLevels';
   const bestByPattern = {};
   const bestKeyFor = p => BEST_KEY + '.' + p;
   const currentBest = () => (Number.isFinite(bestByPattern[soloPattern]) ? bestByPattern[soloPattern] : null);
@@ -478,11 +571,14 @@
   let roomPlayers = new Map();
   let roster = [];
   let roomCode = '', selfId = 'host', myName = '';
-  let roomPattern = 'line', roomPace = PACES.classic, roomBots = 0;
+  let roomPattern = 'line', roomPace = PACES.classic, roomBots = 0, roomHints = false;
   let roomCalled = new Set(), roomBalls = 0, roomLast = null, roomPool = [];
   let roomTimer = null, roomRunning = false, roomFinished = false, roomRound = 0;
   let myRound = 0;
   let myCredits = START_CREDITS;
+  let lastTopUpAt = 0;
+  let topUpTimer = null;
+  let dailyBonus = readDailyBonusState();
   let myStats = {solo: {games: 0, wins: 0}, room: {games: 0, wins: 0, earned: 0, staked: 0}};
   let roomStake = 10, roomCards = 1, roomPot = 0, roomJackpot = 0, roomBudget = 0, roomRake = 0;
   let myCardIndex = 0, myCards = [], roomSeatIds = [];
@@ -510,7 +606,13 @@
   const patternLabel = p => patternSpec(p).label;
   const patternBudget = p => patternSpec(p).budget || 32;
   const patternFreeCenter = p => patternSpec(p).freeCenter !== false;
-  const paceFor = v => PACES[v] || PACES.classic;
+  const clampPace = ms => Math.min(PACE_MAX, Math.max(PACE_MIN, Math.round(ms)));
+  const customPaceMs = raw => clampPace((Number(raw) || 1.2) * 1000);
+  const paceFor = (v, custom) => (v === 'custom' ? customPaceMs(custom) : (PACES[v] || PACES.classic));
+  const paceLabel = ms => {
+    const key = Object.keys(PACES).find(k => PACES[k] === ms);
+    return key ? PACE_LABELS[key] : (ms / 1000).toFixed(2).replace(/0$/, '').replace(/\.$/, '') + 's';
+  };
 
   function cleanName(value) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 14);
@@ -583,6 +685,7 @@
       b.addEventListener('click', () => handleCell(i));
       grid.appendChild(b);
     });
+    markCalledCells();
     renderCardTabs();
   }
 
@@ -620,7 +723,38 @@
     if (!el || !cell) return;
     el.classList.toggle('daubed', !!cell.daubed);
     el.classList.toggle('pending', !!cell.pending);
-    el.setAttribute('aria-label', cell.free ? 'Free space — already daubed' : `${LETTERS[cell.col]} ${cell.n}${cell.daubed ? ', daubed' : ''}`);
+    const isCalled = hintsOn() && !cell.free && calledNumbers().has(cell.n);
+    el.classList.toggle('called', isCalled);
+    el.setAttribute('aria-label', cell.free ? 'Free space — already daubed' : `${LETTERS[cell.col]} ${cell.n}${cell.daubed ? ', daubed' : isCalled ? ', called' : ''}`);
+  }
+
+  /* Which drawn numbers are on the visible card? Hosts track roomCalled,
+     solo and guests track calledSet. */
+  const calledNumbers = () => (mode === 'host' ? roomCalled : calledSet);
+
+  /* In rooms hints are the host's call; in solo the player has their own
+     toggle. Off means find the called numbers yourself. */
+  const hintsOn = () => (mode === 'solo' ? soloHints : roomHints);
+
+  function markCalledCells() {
+    const drawn = calledNumbers();
+    cells.forEach((cell, i) => {
+      const el = grid.children[i];
+      if (!el || !cell) return;
+      const isCalled = hintsOn() && !cell.free && drawn.has(cell.n);
+      el.classList.toggle('called', isCalled);
+      el.setAttribute('aria-label', cell.free ? 'Free space — already daubed' : `${LETTERS[cell.col]} ${cell.n}${cell.daubed ? ', daubed' : isCalled ? ', called' : ''}`);
+    });
+  }
+
+  function renderSoloHints() {
+    const btn = $('soloHintsBtn');
+    if (!btn) return;
+    btn.textContent = soloHints ? '💡 Hints on' : '💡 Hints off';
+    btn.setAttribute('aria-pressed', String(soloHints));
+    btn.title = soloHints
+      ? 'Called numbers are marked cyan on your card — turn off to find them yourself'
+      : 'Find called numbers yourself — turn on to mark them cyan';
   }
 
   function updateHud() {
@@ -635,6 +769,7 @@
     jackpotEl.hidden = !isRoom() || roomJackpot <= 0;
     if (!jackpotEl.hidden) jackpotAmtEl.textContent = String(roomJackpot);
     renderFreezeReminder();
+    renderDailyBonus();
   }
 
   function clampCredits(v) {
@@ -928,6 +1063,138 @@
         ? "This room's host keeps the ledger — leave the room to restore a code."
         : 'Saved in this browser. A restore code carries your points, record and daily streak to another device.';
     }
+    renderTopUp();
+    renderDailyLadder();
+  }
+
+  const topUpLast = () => {
+    const stored = Number(localStorage.getItem(TOPUP_KEY));
+    return Math.max(lastTopUpAt, Number.isFinite(stored) && stored > 0 ? stored : 0);
+  };
+  const topUpWait = () => Math.max(0, TOPUP_COOLDOWN - (Date.now() - topUpLast()));
+
+  function renderTopUp() {
+    const btn = $('topupBtn'), note = $('topupNote');
+    if (!btn || !note) return;
+    clearTimeout(topUpTimer);
+    topUpTimer = null;
+    const wait = topUpWait();
+    btn.disabled = true;
+    if (isRoom()) {
+      btn.textContent = '🎁 Comeback top-up';
+      note.textContent = 'Leave the room to claim — the host keeps the room ledger.';
+      return;
+    }
+    if (myCredits >= TOPUP_UNDER) {
+      btn.textContent = '🎁 Comeback top-up';
+      note.textContent = `Unlocks under ${TOPUP_UNDER} points: +${TOPUP_AMOUNT} to get back to a table. Solo is always free.`;
+      return;
+    }
+    if (wait > 0) {
+      const mins = Math.ceil(wait / 60000);
+      btn.textContent = `🎁 Comeback in ${mins} min`;
+      note.textContent = `The next +${TOPUP_AMOUNT} is available in ${mins} minute${mins === 1 ? '' : 's'}. Solo is always free in the meantime.`;
+      topUpTimer = setTimeout(renderTopUp, Math.min(wait + 100, TOPUP_COOLDOWN));
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = `🎁 Claim ${TOPUP_AMOUNT} comeback points`;
+    note.textContent = 'A safety net, not a payout: it covers a few minimum-stake cards, and wins build it back up.';
+  }
+
+  const dailyLadderState = () => {
+    const last = dailyBonus.last;
+    const streak = Math.max(0, Math.min(7, dailyBonus.streak));
+    const claimedToday = last === dateKey();
+    const oneDayGap = last === previousDateKey(2) && streak > 0;
+    const continuing = claimedToday || last === previousDateKey() || oneDayGap;
+    const nextDay = continuing ? (streak >= 7 ? 1 : streak + 1) : 1;
+    const grace = oneDayGap && nextDay !== 1;
+    const active = claimedToday || last === previousDateKey() || grace ? streak : 0;
+    return {nextDay, claimedToday, grace, doneUpTo: nextDay === 1 ? 0 : active};
+  };
+
+  const nextDailyLoginDay = () => dailyLadderState().nextDay;
+
+  const nextDailyBonus = () => {
+    if (dailyBonus.last === dateKey()) return null;
+    const day = nextDailyLoginDay();
+    return {day, amount: DAILY_BONUS_LADDER[day - 1]};
+  };
+
+  function renderDailyLadder() {
+    const {nextDay, claimedToday, grace, doneUpTo} = dailyLadderState();
+    const nextAmount = DAILY_BONUS_LADDER[nextDay - 1];
+
+    [walletLadderDays, hudLadderDays].filter(Boolean).forEach(list => {
+      if (!list.children.length) {
+        list.innerHTML = DAILY_BONUS_LADDER
+          .map((amount, i) => `<li data-day="${i + 1}"><span>${i + 1}</span><b><i>+</i>${amount}</b></li>`)
+          .join('');
+      }
+      [...list.children].forEach(li => {
+        const day = Number(li.dataset.day);
+        const isDone = day <= doneUpTo;
+        const isNext = day === nextDay;
+        li.classList.toggle('is-done', isDone);
+        li.classList.toggle('is-next', isNext);
+        li.title = `Day ${day} · +${DAILY_BONUS_LADDER[day - 1]} points${isDone ? ' (claimed)' : isNext ? ' — next login' : ''}`;
+        li.setAttribute('aria-label', `Day ${day}: ${DAILY_BONUS_LADDER[day - 1]} points${isDone ? ', claimed' : isNext ? ', next login' : ''}`);
+        if (isNext) li.setAttribute('aria-current', 'step');
+        else li.removeAttribute('aria-current');
+      });
+    });
+
+    if (walletLadderNext) {
+      const prefix = claimedToday ? 'Tomorrow' : grace ? 'Grace' : 'Next';
+      walletLadderNext.textContent = `${prefix}: Day ${nextDay} · +${nextAmount}`;
+    }
+    if (hudLadder) {
+      const graceNote = grace ? 'One missed day forgiven. ' : '';
+      hudLadder.hidden = isRoom();
+      hudLadder.title = `Daily login ladder — ${grace ? 'one missed day forgiven; ' : ''}${claimedToday ? 'tomorrow' : 'next'}: day ${nextDay}, +${nextAmount} points`;
+      hudLadder.setAttribute('aria-label', `Daily login ladder. ${graceNote}${claimedToday ? 'Tomorrow' : 'Next'}: day ${nextDay}, plus ${nextAmount} points.`);
+    }
+  }
+
+  function renderDailyBonus() {
+    renderDailyLadder();
+    if (!dailyBonusChip) return;
+    const next = nextDailyBonus();
+    dailyBonusChip.hidden = isRoom() || !next;
+    if (!next) return;
+    if (bonusDayEl) bonusDayEl.textContent = String(next.day);
+    if (bonusAmountEl) bonusAmountEl.textContent = String(next.amount);
+    const graceNote = dailyLadderState().grace ? ' One missed day forgiven.' : '';
+    dailyBonusChip.title = `Daily login — day ${next.day} of 7: claim +${next.amount} points.${graceNote}`;
+    dailyBonusChip.setAttribute('aria-label', `Daily login bonus, day ${next.day} of 7: claim ${next.amount} points.${graceNote}`);
+  }
+
+  function claimDailyBonus() {
+    if (isRoom()) { status('Leave the room to claim the daily login bonus.'); return; }
+    const next = nextDailyBonus();
+    if (!next) { status('Today\'s daily login bonus is already claimed.'); return; }
+    dailyBonus = {last: dateKey(), streak: next.day};
+    try { localStorage.setItem(DAILY_BONUS_KEY, JSON.stringify(dailyBonus)); } catch (e) {}
+    setMyCredits(myCredits + next.amount, true);
+    updateHud();
+    status(`🎁 Daily login day ${next.day}/7: +${next.amount} points.`);
+  }
+
+  function claimTopUp() {
+    if (isRoom()) { status('Leave the room to claim the comeback top-up.'); return; }
+    if (myCredits >= TOPUP_UNDER) { status(`The comeback top-up unlocks under ${TOPUP_UNDER} points.`); return; }
+    const wait = topUpWait();
+    if (wait > 0) {
+      status(`The next comeback top-up is ready in ${Math.ceil(wait / 60000)} min. Solo is free in the meantime.`);
+      renderTopUp();
+      return;
+    }
+    lastTopUpAt = Date.now();
+    try { localStorage.setItem(TOPUP_KEY, String(lastTopUpAt)); } catch (e) {}
+    setMyCredits(myCredits + TOPUP_AMOUNT, true);
+    updateHud();
+    status(`🎁 +${TOPUP_AMOUNT} comeback points added — good luck at the tables.`);
   }
 
   function copyWalletCode() {
@@ -1003,7 +1270,14 @@
     } else if (incoming.last && incoming.last === last) {
       streak = Math.max(streak, incoming.streak);
     }
-    const merged = {last, streak, best: Math.max(best, streak), freezes: Math.max(local.freezes, incoming.freezes) ? 1 : 0};
+    const merged = {
+      last,
+      streak,
+      best: Math.max(best, streak),
+      freezes: Math.max(local.freezes, incoming.freezes) ? 1 : 0,
+      days: local.days || [],
+      snoozed: local.snoozed || ''
+    };
     try { localStorage.setItem(DAILY_KEY, JSON.stringify(merged)); } catch (e) {}
     renderStreak();
     const mergedGap = streakAgo(merged);
@@ -1200,7 +1474,7 @@
     letter.textContent = String(l);
     chip.append(letter, document.createTextNode(String(n)));
     historyEl.appendChild(chip);
-    historyEl.scrollLeft = historyEl.scrollWidth;
+    historyEl.scrollTop = historyEl.scrollHeight;
   }
 
   function clearHistory() { historyEl.innerHTML = ''; }
@@ -1234,7 +1508,74 @@
 
   /* ---------------- solo ---------------- */
 
-  const soloStartText = () => `Win with ${PATTERNS[soloPattern].note}. A new ball drops every 1.2 seconds — tap the numbers on your card to daub them.`;
+  const soloStartText = () => `Win with ${PATTERNS[soloPattern].note}. A new ball drops every ${(SOLO_LEVELS[soloLevel] / 1000).toFixed(1)} seconds — tap the numbers on your card to daub them.`;
+
+  /* Levels 3 and 4 unlock with a fast solo win or a live daily streak; once
+     earned they stay unlocked in localStorage. */
+  const bestAnyBalls = () => {
+    const vals = Object.values(bestByPattern).filter(v => Number.isFinite(v) && v > 0);
+    return vals.length ? Math.min(...vals) : null;
+  };
+  const readUnlockedLevels = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SOLO_UNLOCK_KEY) || '[]');
+      return new Set(Array.isArray(raw)
+        ? raw.filter(k => Object.prototype.hasOwnProperty.call(SOLO_LEVEL_LABELS, k))
+        : []);
+    } catch (e) { return new Set(); }
+  };
+  const unlockedLevelsNow = () => {
+    const set = readUnlockedLevels();
+    set.add('relaxed');
+    set.add('classic');
+    const best = bestAnyBalls();
+    const streak = liveStreak(readDaily());
+    Object.entries(LEVEL_GATES).forEach(([key, gate]) => {
+      if ((best !== null && best <= gate.balls) || streak >= gate.streak) set.add(key);
+    });
+    return set;
+  };
+  const levelUnlocked = key => unlockedLevelsNow().has(key);
+
+  function refreshSoloLevels() {
+    const unlocked = unlockedLevelsNow();
+    const stored = readUnlockedLevels();
+    const fresh = [...unlocked].filter(k => !stored.has(k));
+    if (fresh.length) {
+      try { localStorage.setItem(SOLO_UNLOCK_KEY, JSON.stringify([...unlocked])); } catch (e) {}
+    }
+    if (!unlocked.has(soloLevel)) {
+      soloLevel = 'classic';
+      try { localStorage.setItem(SOLO_LEVEL_KEY, soloLevel); } catch (e) {}
+    }
+    const sel = $('soloSpeedSel');
+    if (sel) {
+      [...sel.options].forEach(opt => {
+        if (!Object.prototype.hasOwnProperty.call(SOLO_LEVEL_LABELS, opt.value)) return;
+        const open = unlocked.has(opt.value);
+        opt.textContent = SOLO_LEVEL_LABELS[opt.value] + (open ? '' : ' 🔒');
+        opt.title = open ? '' : `Locked — ${LEVEL_GATES[opt.value].text}.`;
+      });
+      sel.value = soloLevel;
+    }
+    renderLevelNext(unlocked);
+    return fresh;
+  }
+
+  function renderLevelNext(unlocked) {
+    const el = $('levelNext');
+    if (!el) return;
+    const next = ['fast', 'turbo'].find(k => !unlocked.has(k));
+    if (!next) {
+      el.textContent = 'All speed levels unlocked';
+      el.title = 'Every solo speed is available.';
+      return;
+    }
+    const gate = LEVEL_GATES[next];
+    const name = SOLO_LEVEL_LABELS[next].replace(/^\d+ · /, '');
+    el.textContent = `Next: ${name} · ${gate.balls}-ball win or ${gate.streak}-day streak`;
+    el.title = `${name} unlocks with a solo win in ${gate.balls} balls or fewer, or a live ${gate.streak}-day daily streak.`;
+  }
 
   function fillSoloPatternSelect() {
     const sel = $('soloPatternSel');
@@ -1248,6 +1589,38 @@
     });
     sel.value = soloPattern;
     sel.addEventListener('change', () => setSoloPattern(sel.value));
+    /* the solo speed level lives beside the pattern picker */
+    const speed = $('soloSpeedSel');
+    if (speed) {
+      speed.value = soloLevel;
+      speed.addEventListener('change', () => {
+        const next = speed.value in SOLO_LEVELS ? speed.value : 'classic';
+        if (!levelUnlocked(next)) {
+          status(`🔒 ${SOLO_LEVEL_LABELS[next].replace(/^\d+ · /, '')} is locked — ${LEVEL_GATES[next].text}.`);
+          speed.value = soloLevel;
+          return;
+        }
+        soloLevel = next;
+        try { localStorage.setItem(SOLO_LEVEL_KEY, soloLevel); } catch (e) {}
+        if (running && mode === 'solo') {
+          clearInterval(timer);
+          timer = setInterval(soloCallBall, SOLO_LEVELS[soloLevel]);
+        } else if (overlay.classList.contains('show')) {
+          ovText.textContent = soloStartText();
+        }
+      });
+    }
+    refreshSoloLevels();
+    const hintsBtn = $('soloHintsBtn');
+    if (hintsBtn) {
+      renderSoloHints();
+      hintsBtn.addEventListener('click', () => {
+        soloHints = !soloHints;
+        try { localStorage.setItem(SOLO_HINTS_KEY, soloHints ? '1' : '0'); } catch (e) {}
+        renderSoloHints();
+        if (mode === 'solo') markCalledCells();
+      });
+    }
   }
 
   function renderDaily() {
@@ -1268,9 +1641,9 @@
   }
 
   const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const previousDateKey = () => {
+  const previousDateKey = (days = 1) => {
     const now = new Date();
-    return dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    return dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - days));
   };
   const readDaily = () => {
     try {
@@ -1314,6 +1687,7 @@
     if (freezeTag) freezeTag.hidden = !(rec.freezes > 0 && n > 0);
     renderDailyHistory();
     renderFreezeReminder();
+    refreshSoloLevels();
   }
 
   function snoozeFreezeReminder() {
@@ -1448,6 +1822,7 @@
     updateHud();
     showCall();
     addHistory(l, n);
+    markCalledCells();
   }
 
   function soloStart() {
@@ -1458,7 +1833,7 @@
     finished = false;
     overlay.classList.remove('show');
     clearInterval(timer);
-    timer = setInterval(soloCallBall, 1200);
+    timer = setInterval(soloCallBall, SOLO_LEVELS[soloLevel]);
     soloCallBall();
   }
 
@@ -1479,6 +1854,7 @@
   }
 
   function soloWin(hit) {
+    const unlockedBefore = unlockedLevelsNow();
     running = false;
     finished = true;
     clearInterval(timer);
@@ -1493,9 +1869,14 @@
       bestByPattern[soloPattern] = balls;
       try { localStorage.setItem(bestKeyFor(soloPattern), String(balls)); } catch (e) {}
     }
+    refreshSoloLevels();
+    const freshUnlocks = [...unlockedLevelsNow()].filter(k => !unlockedBefore.has(k));
     updateHud();
     status(`${patternLabel(soloPattern)} — bingo!`);
-    const text = `${patternLabel(soloPattern)} completed after ${balls} balls.` + (isBest ? ' That is a new best!' : ` Best: ${previous} balls.`) + (froze ? ' ❄ A streak freeze is banked for one missed day.' : '');
+    const unlockText = freshUnlocks.length
+      ? ` 🔓 ${freshUnlocks.map(k => SOLO_LEVEL_LABELS[k].replace(/^\d+ · /, '')).join(' and ')} unlocked!`
+      : '';
+    const text = `${patternLabel(soloPattern)} completed after ${balls} balls.` + (isBest ? ' That is a new best!' : ` Best: ${previous} balls.`) + (froze ? ' ❄ A streak freeze is banked for one missed day.' : '') + unlockText;
     showOverlay('🎉', 'BINGO!', text, '▶ New card', () => {
       soloReset();
       soloStart();
@@ -1527,6 +1908,9 @@
     winsChip.hidden = !inRoom;
     newBtn.hidden = inRoom;
     $('soloPatternWrap').hidden = inRoom;
+    $('soloSpeedWrap').hidden = inRoom;
+    $('levelNext').hidden = inRoom;
+    $('soloHintsBtn').hidden = inRoom;
     $('dailyBtn').hidden = inRoom;
     roomsBtn.hidden = inRoom;
     if (inRoom) overlay.classList.remove('show');
@@ -1627,10 +2011,14 @@
       hostSettings.hidden = false;
       guestSettings.hidden = true;
       $('lobbyPattern').value = roomPattern;
-      $('lobbyPace').value = Object.keys(PACES).find(k => PACES[k] === roomPace) || 'classic';
+      const pacePreset = Object.keys(PACES).find(k => PACES[k] === roomPace);
+      $('lobbyPace').value = pacePreset || 'custom';
+      $('lobbyCustomPaceWrap').hidden = !!pacePreset;
+      $('lobbyCustomPace').value = String(roomPace / 1000);
       $('lobbyBots').value = String(roomBots);
       $('lobbyTable').value = String(roomStake);
       $('lobbyCards').value = String(roomCards);
+      $('lobbyHints').value = roomHints ? '1' : '0';
       startRoomBtn.hidden = false;
       lobbyWait.hidden = true;
       startRoomBtn.disabled = roster.length < 2;
@@ -1638,7 +2026,7 @@
     } else {
       hostSettings.hidden = true;
       guestSettings.hidden = false;
-      guestSettings.textContent = `Win: ${patternLabel(roomPattern)} · Pace: ${PACE_LABELS[Object.keys(PACES).find(k => PACES[k] === roomPace)] || 'Classic'} · ${tableLabel()} · ${roomCards} card${roomCards === 1 ? '' : 's'} each`;
+      guestSettings.textContent = `Win: ${patternLabel(roomPattern)} · Pace: ${paceLabel(roomPace)} · ${tableLabel()} · ${roomCards} card${roomCards === 1 ? '' : 's'} each · Hints: ${roomHints ? 'cyan' : 'off'}`;
       startRoomBtn.hidden = true;
       lobbyWait.hidden = false;
       lobbyWait.textContent = roster.length < 2 ? 'Waiting for more players…' : 'Waiting for the host to start…';
@@ -1758,7 +2146,7 @@
     let out = '';
     const bytes = new Uint32Array(5);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
-    for (let i = 0; i < 5; i++) out += CODE_CHARS[(bytes[i] || Math.random() * CODE_CHARS.length) % CODE_CHARS.length];
+    for (let i = 0; i < 5; i++) out += CODE_CHARS[(bytes[i] || Math.floor(Math.random() * CODE_CHARS.length)) % CODE_CHARS.length];
     return out;
   }
 
@@ -1909,7 +2297,7 @@
 
   function broadcastLobby() {
     roster = publicPlayers();
-    broadcast({t: 'lobby', code: roomCode, pattern: roomPattern, pace: roomPace, players: roster, stake: roomStake, cardsCount: roomCards, pot: roomPot, jackpot: roomJackpot});
+    broadcast({t: 'lobby', code: roomCode, pattern: roomPattern, pace: roomPace, players: roster, stake: roomStake, cardsCount: roomCards, pot: roomPot, jackpot: roomJackpot, hints: roomHints ? 1 : 0});
     updateHud();
     renderRoomBar();
     if (!roomLobby.hidden) renderLobby();
@@ -1955,7 +2343,8 @@
         cardsCount: roomCards,
         pot: roomPot,
         jackpot: roomJackpot,
-        you: player.credits
+        you: player.credits,
+        hints: roomHints ? 1 : 0
       });
     } catch (e) {}
     systemChat(player.name + ' joined the room.');
@@ -2013,6 +2402,10 @@
     const win = findWin(card, roomPattern);
     if (!win) return;
     p.bingos = p.bingos || [];
+    /* A fixed-set pattern stays "won" after every further daub, so only the
+       first completion of the same set on the same card counts as a bingo. */
+    const sig = win.join(',');
+    if (p.bingos.some(b => b.card === ci && b.cells.join(',') === sig)) return;
     p.bingos.push({card: ci, calls: roomBalls, cells: win});
     broadcast({t: 'bingo', player: p.id, name: p.name, c: ci, calls: roomBalls});
     if (p.id === 'host' && ci === myCardIndex) {
@@ -2037,9 +2430,11 @@
       const cell = card && card[idx];
       if (!cell || cell.free || cell.daubed) return;
       if (Math.random() > chance) return;
+      const round = roomRound;
       const delay = 260 + Math.random() * 720;
       setTimeout(() => {
-        if (!roomRunning) return;
+        /* a bot's queued daub must not land on the next round's card */
+        if (!roomRunning || round !== roomRound) return;
         const current = bot.cards[ci] && bot.cards[ci][idx];
         if (current && !current.daubed) hostDaub(bot, ci, idx);
       }, delay);
@@ -2072,6 +2467,7 @@
     updateHud();
     showCall();
     addHistory(last.l, last.n);
+    markCalledCells();
     broadcast({t: 'call', n, balls: roomBalls, last: last.l});
     roomSeatIds.map(id => roomPlayers.get(id)).forEach(p => {
       if (p && p.bot && p.cards) botReact(p, n);
@@ -2103,8 +2499,10 @@
       ranked.slice(0, PAYOUT_SPLIT.length).forEach((p, i) => {
         const amount = Math.floor(settledPot * PAYOUT_SPLIT[i]);
         if (amount <= 0) return;
-        paid += amount;
+        /* A bot never collects: its share is left in the pot and rolls into
+           the bonus pot instead of vanishing with the payout. */
         if (!p.bot) {
+          paid += amount;
           p.credits += amount;
           if (p.id === selfId) setMyCredits(p.credits);
         }
@@ -2167,7 +2565,7 @@
 
     const lines = [];
     if (roomStake > 0) {
-      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}`).join('   '));
+      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}${x.bot ? ' (bot → bonus pot)' : ''}`).join('   '));
       else lines.push('No bingo this round — the pot rolls into the jackpot.');
       if (jackpotWin) lines.push(`🎰 ${jackpotWin.name} hit the jackpot in ${jackpotWin.calls} calls: +${jackpotWin.amount}`);
       lines.push(`Pot ${settledPot} · table fee ${roomRake} · jackpot ${roomJackpot}`);
@@ -2271,6 +2669,7 @@
         cardsCount: roomCards,
         pot: roomPot,
         jackpot: roomJackpot,
+        hints: roomHints ? 1 : 0,
         you: p.credits
       });
     });
@@ -2309,10 +2708,11 @@
     const name = cleanName($('hostName').value) || 'Host';
     localStorage.setItem(NAME_KEY, name);
     roomPattern = resolvePatternSelection($('patternSel').value);
-    roomPace = paceFor($('paceSel').value);
+    roomPace = paceFor($('paceSel').value, $('customPace').value);
     roomBots = Math.max(0, Math.min(3, Number($('botSel').value) || 0));
     roomStake = Math.max(0, Number($('tableSel').value) || 0);
     roomCards = Math.max(1, Math.min(3, Number($('cardsSel').value) || 1));
+    roomHints = $('hintsSel').value === '1';
     roomPot = 0;
     roomJackpot = jackpotSeed();
     clearRoomError();
@@ -2484,6 +2884,7 @@
         roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
         roomPot = Number(data.pot) || 0;
         roomJackpot = Number(data.jackpot) || 0;
+        roomHints = !!data.hints;
         setMyCredits(data.you);
         roster = Array.isArray(data.players) ? data.players : [];
         chat = Array.isArray(data.chat) ? data.chat.slice() : [];
@@ -2509,6 +2910,7 @@
         roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
         roomPot = Number(data.pot) || 0;
         roomJackpot = Number(data.jackpot) || 0;
+        roomHints = !!data.hints;
         roster = Array.isArray(data.players) ? data.players : roster;
         const meNow = roster.find(x => x.id === selfId);
         if (meNow) setMyCredits(meNow.credits);
@@ -2530,6 +2932,7 @@
         updateHud();
         showCall();
         addHistory(last.l, n);
+        markCalledCells();
         const has = cells.some(c => c.n === n);
         status(has ? `Ball ${last.l} ${last.n} — tap it on your card.` : `Ball ${last.l} ${last.n} — no match on your card.`);
         break;
@@ -2614,6 +3017,7 @@
     roomCards = Math.max(1, Math.min(3, Number(data.cardsCount) || 1));
     roomPot = Number(data.pot) || 0;
     roomJackpot = Number(data.jackpot) || 0;
+    roomHints = !!data.hints;
     setMyCredits(data.you);
     myCards = (Array.isArray(data.cards) ? data.cards : []).map(cardFromNumbers);
     if (!myCards.length) myCards = [makeCard(patternFreeCenter(roomPattern))];
@@ -2659,8 +3063,10 @@
       if (data.jackpotWin && data.jackpotWin.id === selfId) earned += Number(data.jackpotWin.amount) || 0;
       const paidIn = (Number(data.stake) || roomStake) * (Number(data.cardsCount) || roomCards || 1);
       recordRoomRound(data.winnerId === selfId, earned, paidIn);
-      if (data.pattern === 'blackout' && data.winnerId === selfId) awardStreakFreeze();
+      /* mark the day before banking a freeze, so a newly earned freeze is not
+         spent covering yesterday (the host settles in the same order) */
       if (roomPattern === dailyPatternKey()) markDailyPlayed();
+      if (data.pattern === 'blackout' && data.winnerId === selfId) awardStreakFreeze();
     }
     updateHud();
     renderRoomBar();
@@ -2672,7 +3078,7 @@
     const lines = [];
     if ((Number(data.stake) || 0) > 0) {
       const payouts = Array.isArray(data.payouts) ? data.payouts : [];
-      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}`).join('   '));
+      if (payouts.length) lines.push(payouts.map(x => `${x.place}. ${x.name} +${x.amount}${x.bot ? ' (bot → bonus pot)' : ''}`).join('   '));
       else lines.push('No bingo this round — the pot rolls into the jackpot.');
       if (data.jackpotWin) lines.push(`🎰 ${data.jackpotWin.name} hit the jackpot in ${data.jackpotWin.calls} calls: +${data.jackpotWin.amount}`);
       lines.push(`Pot ${data.pot || 0} · bonus ${data.jackpot || 0} · your points ${myCredits} · rooms ${myStats.room.wins} won / ${myStats.room.earned} earned`);
@@ -2701,7 +3107,7 @@
     guestPingTimer = null;
     clearTimeout(joinWait);
     joinWait = null;
-    if (notify && mode === 'host') {
+    if (notify) {
       try { broadcast({t: 'closed'}); } catch (e) {}
     }
     hostConns.forEach(conn => { try { conn.close(); } catch (e) {} });
@@ -2725,6 +3131,7 @@
     roomPot = 0;
     roomJackpot = 0;
     roomRake = 0;
+    roomHints = false;
     myCards = [];
     myCardIndex = 0;
     if (cardTabsEl) { cardTabsEl.hidden = true; cardTabsEl.innerHTML = ''; }
@@ -2820,7 +3227,7 @@
   $('freezePlayBtn').addEventListener('click', playDaily);
   $('freezeSnoozeBtn').addEventListener('click', snoozeFreezeReminder);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { renderDaily(); renderStreak(); }
+    if (!document.hidden) { renderDaily(); renderStreak(); renderDailyBonus(); }
   });
 
   newBtn.addEventListener('click', () => {
@@ -2876,6 +3283,8 @@
 
   walletCopyBtn.addEventListener('click', copyWalletCode);
   walletRestoreBtn.addEventListener('click', openWalletRestore);
+  $('topupBtn').addEventListener('click', claimTopUp);
+  $('dailyBonusChip').addEventListener('click', claimDailyBonus);
   walletCheckBtn.addEventListener('click', checkWalletCode);
   walletApplyBtn.addEventListener('click', applyWalletCode);
   walletCancelBtn.addEventListener('click', () => {
@@ -2926,9 +3335,21 @@
     broadcastLobby();
     renderLobby();
   });
+  $('paceSel').addEventListener('change', e => {
+    $('customPaceWrap').hidden = e.target.value !== 'custom';
+  });
   $('lobbyPace').addEventListener('change', e => {
     if (mode !== 'host') return;
-    roomPace = paceFor(e.target.value);
+    $('lobbyCustomPaceWrap').hidden = e.target.value !== 'custom';
+    roomPace = paceFor(e.target.value, $('lobbyCustomPace').value);
+    broadcastLobby();
+    renderLobby();
+  });
+  $('lobbyCustomPace').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    const ms = customPaceMs(e.target.value);
+    e.target.value = String(ms / 1000);
+    roomPace = ms;
     broadcastLobby();
     renderLobby();
   });
@@ -2950,6 +3371,12 @@
   $('lobbyCards').addEventListener('change', e => {
     if (mode !== 'host') return;
     roomCards = Math.max(1, Math.min(3, Number(e.target.value) || 1));
+    broadcastLobby();
+    renderLobby();
+  });
+  $('lobbyHints').addEventListener('change', e => {
+    if (mode !== 'host') return;
+    roomHints = e.target.value === '1';
     broadcastLobby();
     renderLobby();
   });
@@ -3013,7 +3440,8 @@
   const giftToken = giftTokenFromUrl();
   if (giftToken) handleGiftLink(giftToken);
 
-  const inviteRoom = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);    if (inviteRoom.length === 5) {
+  const inviteRoom = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  if (inviteRoom.length === 5) {
     $('joinCode').value = inviteRoom;
     $('joinHint').textContent = 'You were invited to room ' + inviteRoom + '. Enter your name to join.';
     openRoomModal('join');

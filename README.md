@@ -11,6 +11,7 @@ Project status, architecture notes and remaining work: [PROJECT.md](PROJECT.md).
 - **Eight win patterns** — any line, four corners, X, T, H, the climbing ladder, bullseye (3×3 target, no free centre) and blackout — each with its own card-cost budget and bonus window.
 - **Pattern of the day** — one pattern rotates daily; the 🎯 chip jumps straight to it.
 - **Daily streak** — completing today's pattern (solo or seated room round) extends the streak; the HUD shows the live run and your best.
+- **Daily login ladder** — claim once per local day from the 🎁 chip; rewards climb 50 → 60 → 75 → 95 → 120 → 150 → 200 points. The compact ladder beside the Points chip and the Your points panel both preview all seven rewards and highlight your next claim. One missed day is forgiven; two in a row restart at day 1, and the ladder cycles after day 7.
 - **Streak freeze** — finish a blackout (solo, or win a blackout room) to bank one freeze. It is spent automatically to cover exactly one missed day.
 - **Seven-day history** — a strip under the HUD marks amber for played, ❄ for a frozen day, dim for missed.
 - **Freeze reminder** — when a freeze is banked and today's pattern is still unplayed, a reminder names the pattern and offers a switch to it; "Not today" hides it until tomorrow.
@@ -27,7 +28,7 @@ python3 -m http.server 8080
 # then open http://localhost:8080/
 ```
 
-Solo: pick a pattern (or press 🎯 Today) and start calling. Daub each called number; complete the pattern to win. Rooms: 🌐 Rooms → create or join; the host controls rounds.
+Solo: pick a pattern, a speed level and optional card hints (or press 🎯 Today) and start calling. Levels 3–4 unlock with a fast win (24 / 16 balls) or a 3 / 7-day streak; the next target is shown beneath the level picker. Daub each called number; complete the pattern to win. Rooms: 🌐 Rooms → create or join; the host controls rounds.
 
 ## Tests
 
@@ -62,5 +63,3 @@ A ready-to-share copy of the playable files ships as `downloads/bingo-2.zip` (un
 - All state lives in `localStorage` in the player's browser; there is no server, account or sync. Restore codes are the only way to move a record.
 - Daily history and the reminder snooze are local to a browser; the streak, best and freeze travel in restore codes.
 - Source: <https://github.com/jiffythorn/bingo-2> · MIT License.
-
-Bingo 2 was extracted from the larger [Game Hub](https://github.com/jiffythorn/game-hub) arcade; this repository is its standalone home.
