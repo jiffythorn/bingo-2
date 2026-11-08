@@ -4,7 +4,8 @@
   "private": true,
   "description": "Points-only 75-ball bingo with daily patterns, rooms and portable restore codes",
   "scripts": {
-    "test": "node tests/run.js"
+    "test": "node tests/run.js",
+    "test:update": "node tests/run.js --update"
   },
   "devDependencies": {
     "jsdom": "^31.0.0"

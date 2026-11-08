@@ -29,7 +29,7 @@ Notes:
 - `run.js` streams each suite, then prints a per-suite summary comparing its
   PASS count with the expected `checks` table in `run.js`, plus wall-clock time
   and the total. A drift fails the run, so checks cannot disappear silently;
-  `node tests/run.js --update` rewrites the table after a clean run.
+  `npm run test:update` rewrites the table after a clean run.
 - The minter UI itself is not tested here: that tool is not part of this repo.
 - `tests/helpers.js` boots the real page with seeded storage:
   `bootGame({seed, local, html, beforeParse, onError})`. Typed `seed` values —
