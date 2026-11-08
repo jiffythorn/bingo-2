@@ -131,6 +131,7 @@ Key pieces:
 | `gh.bingo2.soloSkills` | one solo-opponent skill per bot (Rex, Nova, Pip) |
 | `gh.bingo2.soloWon` | solo bot points won today, against the 100-point cap |
 | `gh.bingo2.roomBotSkills` | one room-bot skill per bot (Rex, Nova, Pip) |
+| `gh.bingo2.whatsNew` | last one-time notice dismissed (bots-v1) |
 | `gh.bingo2.name` | player name |
 | `gh.bingo2.claims` | recent gift-code IDs already redeemed |
 
@@ -180,7 +181,7 @@ recorded in `gh.bingo2.claims` so a code cannot be reused on the same browser.
 - `node --check` on the extracted script: clean.
 - Logic suites (JSDOM) run with `npm test`: patterns **69** checks, wallet and
   restore codes **106**, solo + daily + freeze + history + reminder **78**, solo
-  opponents **63**, gift tokens **22**, rooms **37** — six suites, all passing
+  opponents **68**, gift tokens **22**, rooms **37** — six suites, all passing
   and stable across repeated runs.
 - Published page checked at the Pages URL: HTML, both stylesheets, terms and the
   ZIP return 200; the board, pattern list and history strip render; browser

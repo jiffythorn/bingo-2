@@ -621,6 +621,9 @@
   /* Solo opponents: 0-3 labelled bots racing the same pattern. One is the
      default so a solo card always has someone to beat; the player can set it
      to None. Each bot beaten pays a small prize (solo has no card cost). */
+  /* Bump WHATS_NEW_ID to show a new one-time card; the stored value is the id. */
+  const WHATS_NEW_KEY = 'gh.bingo2.whatsNew';
+  const WHATS_NEW_ID = 'bots-v1';
   const SOLO_BOTS_KEY = 'gh.bingo2.soloBots';
   let soloBots = (() => {
     const saved = parseInt(localStorage.getItem(SOLO_BOTS_KEY), 10);
@@ -1668,6 +1671,40 @@
       overlayAlt.onclick = null;
     }
     overlay.classList.add('show');
+  }
+
+  /* ---------------- what's new ---------------- */
+
+  const whatsNewSeen = () => {
+    try { return localStorage.getItem(WHATS_NEW_KEY) === WHATS_NEW_ID; } catch (e) { return false; }
+  };
+
+  function markWhatsNewSeen() {
+    try { localStorage.setItem(WHATS_NEW_KEY, WHATS_NEW_ID); } catch (e) {}
+  }
+
+  function showStartOverlay() {
+    showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart, {label: '🌐 Play with friends', action: () => openRoomModal('create')});
+  }
+
+  /* The card replaces the greeting until the player starts a game or dismisses
+     it; either way the notice is recorded and never shown again. */
+  function showWhatsNew() {
+    showOverlay('🤖', "What's new: bots are on the card",
+      'Race up to three bots on any solo pattern — set each one to Casual, Normal or Sharp. Every bot you beat pays 5, 10 or 15 points, and a loss costs nothing.\n\nSolo bot winnings stop at 100 points a day; the 🤖 chip in the HUD tracks the tally. Hosting? Give each room bot its own skill too.',
+      '🤖 Try a bot race',
+      () => {
+        markWhatsNewSeen();
+        if (soloBots === 0) {
+          const picker = $('soloBotSel');
+          if (picker) {
+            picker.value = '1';
+            picker.dispatchEvent(new Event('change', {bubbles: true}));
+          }
+        }
+        soloStart();
+      },
+      {label: 'Got it', action: () => { markWhatsNewSeen(); showStartOverlay(); }});
   }
 
   /* ---------------- solo ---------------- */
@@ -3855,7 +3892,8 @@
   updateModeUi();
   renderWallet();
   renderRecord();
-  showOverlay('🎱', 'Bingo night', soloStartText(), '▶ Start calling', soloStart, {label: '🌐 Play with friends', action: () => openRoomModal('create')});
+  if (whatsNewSeen()) showStartOverlay();
+  else showWhatsNew();
 
   const giftToken = giftTokenFromUrl();
   if (giftToken) handleGiftLink(giftToken);

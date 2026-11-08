@@ -7,9 +7,11 @@ let html = fs.readFileSync(require('path').join(__dirname, '..', 'index.html'), 
 html = html.replace('})();\n</script>', '  window.__logic = {soloWin, soloBotLeft, soloBotPrize, soloWonToday, soloBotAllowance, dateKey};\n})();\n</script>');
 
 
-const boot = (local, opts) => bootGame({
+const boot = (local, opts = {}) => bootGame({
   html,
-  local,
+  /* Returning visitors have already dismissed the What's new card; pass
+     {freshCard: true} to boot a browser that has never seen it. */
+  local: opts.freshCard ? local : Object.assign({'gh.bingo2.whatsNew': 'bots-v1'}, local),
   beforeParse(w) {
     installClock(w, error => { console.log('TIMER ERROR: ' + error.message); suite.failures++; });
     /* 0 makes every bot daub check pass and every delay the shortest one */
@@ -168,6 +170,19 @@ const pick = (w, value) => {
   const yday = (() => { const n = new Date(); const d = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   const cap2 = boot({'gh.bingo2.soloPattern': 'line', 'gh.bingo2.soloBots': '1', 'gh.bingo2.soloSkills': JSON.stringify(['sharp', 'normal', 'normal']), 'gh.bingo2.soloWon': JSON.stringify({d: yday, won: 100})});
   check('yesterday’s winnings do not count today', cap2.__logic.soloBotAllowance() === 100, cap2.__logic.soloBotAllowance());
+
+  /* 11. the one-time What's new card */
+  const wn1 = boot({}, {freshCard: true});
+  check("a first visit shows the What's new card", /What's new/.test($(wn1, 'ovTitle').textContent) && wn1.localStorage.getItem('gh.bingo2.whatsNew') === null, $(wn1, 'ovTitle').textContent);
+  check('the card states the prizes and the daily cap', /5, 10 or 15 points/.test($(wn1, 'ovText').textContent) && /100 points a day/.test($(wn1, 'ovText').textContent), $(wn1, 'ovText').textContent);
+  $(wn1, 'overlayAlt').click();
+  check('Got it dismisses the card and restores the start screen', wn1.localStorage.getItem('gh.bingo2.whatsNew') === 'bots-v1' && $(wn1, 'ovTitle').textContent === 'Bingo night', $(wn1, 'ovTitle').textContent);
+  const wn2 = boot({'gh.bingo2.whatsNew': 'bots-v1'});
+  check('a dismissed card stays gone on the next visit', $(wn2, 'ovTitle').textContent === 'Bingo night' && !/What's new/.test($(wn2, 'ovTitle').textContent), $(wn2, 'ovTitle').textContent);
+  const wn3 = boot({}, {freshCard: true});
+  $(wn3, 'startBtn').click();
+  await flush(wn3);
+  check('starting from the card dismisses it and deals a race', wn3.localStorage.getItem('gh.bingo2.whatsNew') === 'bots-v1' && !$(wn3, 'overlay').classList.contains('show') && $(wn3, 'soloBots').children.length === 1, $(wn3, 'ovTitle').textContent);
 
   process.exit(suite.report('SOLO OPPONENT'));
 })().catch(e => { console.log('HARNESS ERROR: ' + e.stack); process.exit(1); });

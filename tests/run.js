@@ -11,7 +11,7 @@ const suites = [
   {name: 'patterns', checks: 69},
   {name: 'wallet', checks: 106},
   {name: 'solo', checks: 78},
-  {name: 'solo-bots', checks: 63},
+  {name: 'solo-bots', checks: 68},
   {name: 'gift', checks: 22},
   {name: 'rooms', checks: 37}
 ];

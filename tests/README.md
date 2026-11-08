@@ -16,7 +16,7 @@ npm test
 | `patterns.test.js` | Pattern cell sets, free-centre rules, budgets, `findWin` |
 | `wallet.test.js` | Points, restore codes v1-v6 and their legacy fixtures, standings, streak/freeze codec |
 | `solo.test.js` | Solo flow, daily rotation, streak, freeze, history, reminder |
-| `solo-bots.test.js` | Solo opponents: picker, bot cards and progress, per-opponent skills, lost race, win prize, daily cap in the HUD chip and points panel |
+| `solo-bots.test.js` | Solo opponents: picker, bot cards and progress, per-opponent skills, lost race, win prize, daily cap in the HUD chip and points panel, the one-time What's new card |
 | `gift.test.js` | Gift token format, signature checks, caps, replay, claims |
 | `rooms.test.js` | Host/guest room flow with a fake PeerJS broker, per-bot skills, settlement |
 
