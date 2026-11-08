@@ -602,6 +602,21 @@ body.page-bingo2.modal-open { overflow: hidden; }
 
 /* ---------- Bingo 2 responsive ---------- */
 @media (max-width: 640px) {
+  /* Cover the whole viewport, not just the board stage, so the start and
+     What's new cards are visible before the controls; scroll if they are tall. */
+  .page-bingo2 .stage > .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    justify-content: safe center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px 18px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
   .page-bingo2 .bingo-shell { padding: 8px; gap: 7px; }
   .page-bingo2 .bingo-call { min-height: 48px; gap: 9px; }
   .page-bingo2 .bingo-ball { width: 54px; }
